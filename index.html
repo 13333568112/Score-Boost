@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>中考快速提分助手</title>
+<meta name="theme-color" content="#4A90D9">
+<meta name="description" content="面向山西中考的本地化提分练习工具，支持智能练习、专项冲刺和掌握度跟踪。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="提分助手">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+<style>
+:root {
+  --primary: #4A90D9;
+  --success: #4CAF50;
+  --danger: #E74C3C;
+  --warning: #F39C12;
+  --bg: #f5f6fa;
+  --card: #fff;
+  --text: #2c3e50;
+  --text2: #7f8c8d;
+  --border: #e8e8e8;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --radius: 12px;
+  --tab-height: 64px;
+  --header-height: 52px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; -webkit-tap-highlight-color: transparent; user-select: none; }
+#app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; }
+#app-header { position: fixed; top:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; height:var(--header-height); background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:space-between; padding:0 16px; z-index:100; font-size:17px; font-weight:600; }
+#app-header .btn-back { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:4px 8px; }
+#app-main { padding-top:var(--header-height); padding-bottom:calc(var(--tab-height) + 16px); min-height:100vh; }
+#app-tabs { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; height:var(--tab-height); background:var(--card); border-top:1px solid var(--border); display:flex; z-index:100; }
+.tab-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:11px; color:var(--text2); cursor:pointer; transition:color 0.2s; border:none; background:none; }
+.tab-item.active { color:var(--primary); }
+.tab-item .tab-icon { font-size:22px; margin-bottom:2px; }
+.card { background:var(--card); border-radius:var(--radius); padding:16px; margin:12px 16px; box-shadow:var(--shadow); }
+.card-header { font-size:16px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.countdown { text-align:center; padding:20px 16px; background:linear-gradient(135deg, var(--primary), #6BB5FF); color:#fff; margin:12px 16px; border-radius:var(--radius); }
+.countdown .days { font-size:42px; font-weight:700; }
+.countdown .label { font-size:13px; opacity:0.9; }
+.subject-card { display:flex; align-items:center; padding:14px 16px; background:var(--card); margin:8px 16px; border-radius:var(--radius); box-shadow:0 1px 4px rgba(0,0,0,0.06); cursor:pointer; transition:transform 0.15s; }
+.subject-card:active { transform:scale(0.98); }
+.subject-card .s-icon { font-size:28px; margin-right:12px; width:40px; text-align:center; }
+.subject-card .s-info { flex:1; }
+.subject-card .s-name { font-weight:600; font-size:15px; }
+.subject-card .s-score { font-size:13px; color:var(--text2); }
+.subject-card .s-progress { width:60px; text-align:right; }
+.progress-bar { height:6px; background:#eee; border-radius:3px; margin-top:4px; overflow:hidden; }
+.progress-bar .fill { height:100%; border-radius:3px; transition:width 0.3s; }
+.accordion { margin:0; }
+.accordion-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:var(--card); margin:4px 16px; border-radius:8px; cursor:pointer; font-weight:500; }
+.accordion-header:active { background:#f0f0f0; }
+.accordion-body { display:none; padding:0 16px 12px; }
+.accordion-body.open { display:block; }
+.concept-card { background:var(--card); border-radius:8px; padding:14px; margin:8px 0; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+.concept-card .cc-title { font-weight:600; font-size:15px; margin-bottom:8px; color:var(--primary); }
+.concept-card .cc-body { font-size:14px; line-height:1.7; }
+.concept-card .cc-highlight { background:#FFF9C4; padding:8px 12px; border-radius:6px; margin:8px 0; font-size:13px; }
+.concept-card .cc-mistake { margin-top:8px; padding:8px 12px; border-left:3px solid var(--danger); background:#FFF5F5; border-radius:0 6px 6px 0; font-size:13px; }
+.concept-card .cc-mnemonic { margin-top:8px; padding:8px 12px; border-left:3px solid var(--success); background:#F0FFF0; border-radius:0 6px 6px 0; font-size:13px; }
+.formula-box { background:#F8F9FA; border-radius:8px; padding:12px; margin:8px 0; font-family:"Courier New", monospace; text-align:center; }
+.formula-box .expr { font-size:20px; font-weight:700; color:var(--primary); }
+.formula-box .desc { font-size:12px; color:var(--text2); margin-top:4px; }
+.formula-box .vars { font-size:12px; color:var(--text2); margin-top:2px; }
+.quiz-card { background:var(--card); border-radius:var(--radius); padding:20px; margin:12px 16px; }
+.quiz-card .q-num { font-size:12px; color:var(--text2); margin-bottom:8px; }
+.quiz-card .q-stem { font-size:16px; font-weight:500; margin-bottom:16px; line-height:1.6; }
+.quiz-option { display:block; width:100%; text-align:left; padding:14px 16px; margin:8px 0; border:2px solid var(--border); border-radius:10px; background:var(--card); font-size:15px; cursor:pointer; transition:all 0.2s; }
+.quiz-option:active { transform:scale(0.98); }
+.quiz-option.correct { border-color:var(--success); background:#E8F5E9; }
+.quiz-option.wrong { border-color:var(--danger); background:#FFEBEE; }
+.quiz-option.selected { border-color:var(--primary); }
+.quiz-feedback { margin-top:12px; padding:12px; border-radius:8px; font-size:14px; display:none; }
+.quiz-feedback.show { display:block; }
+.quiz-feedback.correct { background:#E8F5E9; color:#2E7D32; }
+.quiz-feedback.wrong { background:#FFEBEE; color:#C62828; }
+.quiz-nav { display:flex; justify-content:space-between; margin-top:16px; gap:8px; }
+.btn { padding:10px 20px; border-radius:8px; border:none; font-size:14px; cursor:pointer; font-weight:500; transition:opacity 0.2s; }
+.btn:active { opacity:0.8; }
+.btn[disabled] { opacity:0.45; cursor:not-allowed; }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-outline { background:#fff; color:var(--primary); border:1px solid var(--primary); }
+.btn-sm { padding:6px 12px; font-size:12px; }
+.plan-card { background:var(--card); border-radius:var(--radius); padding:16px; margin:8px 16px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+.plan-card .task-row { display:flex; align-items:center; padding:8px 0; gap:12px; }
+.plan-card .task-check { width:22px; height:22px; border:2px solid #ccc; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+.plan-card .task-check.done { background:var(--success); border-color:var(--success); color:#fff; }
+.plan-card .task-info { flex:1; font-size:14px; }
+.plan-card .task-time { font-size:12px; color:var(--text2); }
+.subject-selector { display:flex; flex-wrap:wrap; gap:8px; padding:12px 16px; }
+.subject-chip { padding:8px 16px; border-radius:20px; border:1px solid var(--border); font-size:13px; cursor:pointer; background:#fff; }
+.subject-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.mode-bar { display:flex; gap:8px; padding:12px 16px; }
+.mode-chip { flex:1; text-align:center; padding:10px; border-radius:8px; font-size:13px; cursor:pointer; background:#fff; border:1px solid var(--border); }
+.mode-chip.active { background:var(--primary); color:#fff; }
+.empty-state { text-align:center; padding:40px 16px; color:var(--text2); }
+.empty-state .icon { font-size:48px; margin-bottom:12px; }
+.text-center { text-align:center; }
+.mt-8 { margin-top:8px; }
+.mt-16 { margin-top:16px; }
+.flex { display:flex; }
+.flex-wrap { flex-wrap:wrap; }
+.gap-8 { gap:8px; }
+.hidden { display:none; }
+.score-input { width:60px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; font-size:14px; text-align:center; }
+.score-edit { display:flex; align-items:center; gap:8px; margin:8px 16px; }
+.timeline-item { padding:12px 16px; border-left:3px solid var(--primary); margin-left:16px; position:relative; }
+.timeline-item::before { content:''; position:absolute; left:-7px; top:16px; width:11px; height:11px; background:var(--primary); border-radius:50%; }
+.timeline-item .year { font-weight:700; color:var(--primary); }
+.template-box { background:#FFF8E1; border-left:3px solid var(--warning); padding:12px; border-radius:0 8px 8px 0; margin:8px 0; font-size:13px; }
+.paper-config-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; }
+.paper-config-item { display:flex; flex-direction:column; gap:6px; }
+.paper-config-item label { font-size:12px; color:var(--text2); }
+.paper-config-select { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:#fff; color:var(--text); }
+.paper-config-tip { margin-top:12px; font-size:12px; color:var(--text2); }
+.install-fab { position:fixed; right:16px; bottom:calc(var(--tab-height) + 18px); z-index:150; border:none; border-radius:999px; background:linear-gradient(135deg, var(--primary), #6BB5FF); color:#fff; box-shadow:0 10px 24px rgba(74,144,217,0.28); padding:12px 16px; font-size:13px; font-weight:600; display:none; align-items:center; gap:8px; }
+.install-fab.show { display:flex; }
+.install-fab:active { transform:scale(0.98); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="app-header">
+    <span id="header-back" class="btn-back hidden">←</span>
+    <span id="header-title">中考提分助手</span>
+    <span style="width:32px"></span>
+  </div>
+  <div id="app-main"></div>
+  <div id="app-tabs">
+    <button class="tab-item active" data-tab="dashboard">
+      <span class="tab-icon">📊</span>总览
+    </button>
+    <button class="tab-item" data-tab="study">
+      <span class="tab-icon">📚</span>学习
+    </button>
+    <button class="tab-item" data-tab="practice">
+      <span class="tab-icon">📝</span>练习
+    </button>
+    <button class="tab-item" data-tab="plan">
+      <span class="tab-icon">📅</span>计划
+    </button>
+  </div>
+</div>
+<button id="install-app-btn" class="install-fab" type="button">📲 安装到手机</button>
+<script src="content.js"></script>
+<script src="data/question-bank.js"></script>
+<script src="engine/scoring.js"></script>
+<script src="engine/analytics.js"></script>
+<script src="engine/recommendation.js"></script>
+<script src="engine/question-renderer.js"></script>
+<script>
+// ============ APP STATE ============
+const DEFAULT_STATE = {
+  examDate: '2026-06-20',
+  scores: { physics:35, chemistry:25, chinese:70, math:70, history:25, daofa:25, english:60 },
+  completedConcepts: {},
+  quizHistory: {},
+  quizScores: {},
+  attemptLog: [],
+  masteryMap: {},
+  recommendationHistory: [],
+  dailyPlan: null,
+  planGenerated: null,
+  planCompleted: {},
+};
+let State = JSON.parse(JSON.stringify(DEFAULT_STATE));
+function loadState() {
+  const saved = localStorage.getItem('zk_state');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      State = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)), s);
+    } catch(e) {}
+  }
+}
+function saveState() { localStorage.setItem('zk_state', JSON.stringify(State)); }
+function resetState() { State = JSON.parse(JSON.stringify(DEFAULT_STATE)); saveState(); }
+
+// ============ ROUTING ============
+let currentView = 'dashboard';
+let currentSubject = 'physics';
+let currentUnit = null;
+let currentStudyFocus = null;
+let quizMode = 'all';
+let quizIndex = 0;
+let quizQuestions = [];
+let deferredInstallPrompt = null;
+let practicePaperConfig = {
+  subject: 'physics',
+  unitId: '',
+  typeCategory: '',
+  difficulty: 'all',
+  source: '',
+  count: '12'
+};
+
+function navigate(view, params) {
+  currentView = view;
+  if (params && params.subject) currentSubject = params.subject;
+  if (params && params.unit) currentUnit = params.unit;
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector('[data-tab="' + view + '"]');
+  if (tab) tab.classList.add('active');
+  document.getElementById('header-back').classList.toggle('hidden', view === 'dashboard');
+  render();
+}
+
+function setSubject(subj) {
+  currentSubject = subj;
+  currentUnit = null;
+  currentStudyFocus = null;
+  document.getElementById('header-title').textContent = SUBJECT_DATA[subj].name;
+  renderStudyView();
+}
+
+// ============ RENDER ENGINE ============
+const main = document.getElementById('app-main');
+const headerTitle = document.getElementById('header-title');
+const headerBack = document.getElementById('header-back');
+const installAppBtn = document.getElementById('install-app-btn');
+
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function isIosDevice() {
+  return /iphone|ipad|ipod/i.test(window.navigator.userAgent || '');
+}
+
+function refreshInstallButton() {
+  if (!installAppBtn) return;
+  const shouldShow = !isStandaloneMode() && (isIosDevice() || window.isSecureContext);
+  installAppBtn.classList.toggle('show', shouldShow);
+}
+
+async function installApp() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if (choice && choice.outcome !== 'accepted') {
+      deferredInstallPrompt = null;
+    }
+    refreshInstallButton();
+    return;
+  }
+  if (isIosDevice()) {
+    alert('请用 Safari 打开此页面，点底部“分享”，再选“添加到主屏幕”。');
+    return;
+  }
+  alert('请在浏览器菜单中选择“安装应用”或“添加到主屏幕”。');
+}
+
+function registerPwaSupport() {
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    refreshInstallButton();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    refreshInstallButton();
+  });
+
+  if (installAppBtn) {
+    installAppBtn.addEventListener('click', () => {
+      installApp().catch(() => {
+        alert('安装提示暂时不可用，请通过浏览器菜单手动添加到主屏幕。');
+      });
+    });
+  }
+
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+
+  refreshInstallButton();
+}
+
+headerBack.addEventListener('click', () => {
+  if (currentView === 'practice' && quizQuestions.length > 0 && currentUnit) {
+    currentView = 'study';
+    renderStudyView();
+  } else if (currentView !== 'dashboard') {
+    navigate('dashboard');
+  }
+});
+
+document.querySelectorAll('.tab-item').forEach(btn => {
+  btn.addEventListener('click', () => navigate(btn.dataset.tab));
+});
+
+function render() {
+  switch(currentView) {
+    case 'dashboard': renderDashboard(); break;
+    case 'study': renderStudyView(); break;
+    case 'practice': renderPracticeView(); break;
+    case 'plan': renderPlanView(); break;
+  }
+}
+
+// ============ DASHBOARD ============
+function renderDashboard() {
+  headerTitle.textContent = '中考提分助手';
+  const dt = new Date(State.examDate);
+  const now = new Date();
+  const daysLeft = Math.max(0, Math.ceil((dt - now) / (1000*60*60*24)));
+  const subjects = [
+    { id:'physics', name:'物理', full:90, icon:'⚛️', color:'#2196F3' },
+    { id:'chemistry', name:'化学', full:70, icon:'🧪', color:'#9C27B0' },
+    { id:'chinese', name:'语文', full:120, icon:'📖', color:'#E91E63' },
+    { id:'math', name:'数学', full:120, icon:'📐', color:'#FF9800' },
+    { id:'history', name:'历史', full:75, icon:'📜', color:'#795548' },
+    { id:'daofa', name:'道法', full:75, icon:'⚖️', color:'#607D8B' },
+    { id:'english', name:'英语', full:120, icon:'🔤', color:'#009688' },
+  ];
+
+  // Calculate total progress
+  let totalConcepts = 0, completedConcepts = 0;
+  subjects.forEach(s => {
+    const data = SUBJECT_DATA[s.id];
+    if (data) {
+      data.units.forEach(u => {
+        u.concepts.forEach(c => { totalConcepts++; if (isConceptDone(s.id, c.id)) completedConcepts++; });
+      });
+    }
+  });
+  const pct = totalConcepts > 0 ? Math.round(completedConcepts / totalConcepts * 100) : 0;
+
+  let html = '';
+  // Countdown
+  html += '<div class="countdown"><div class="days">' + daysLeft + '</div><div class="label">距中考还有 天</div>';
+  html += '<div style="margin-top:8px;font-size:12px;opacity:0.8">整体进度 ' + pct + '%</div>';
+  html += '<div class="progress-bar" style="background:rgba(255,255,255,0.3);margin-top:6px"><div class="fill" style="width:' + pct + '%;background:#fff"></div></div></div>';
+
+  // Score editing
+  html += '<div class="card"><div class="card-header">📝 当前成绩设置</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  subjects.forEach(s => {
+    html += '<div style="display:flex;align-items:center;gap:6px;font-size:13px"><span>' + s.icon + ' ' + s.name + '</span>';
+    html += '<input type="number" class="score-input" value="' + State.scores[s.id] + '" data-subj="' + s.id + '" min="0" max="' + s.full + '" style="width:50px"></div>';
+  });
+  html += '</div></div>';
+
+  // Subject cards
+  subjects.forEach(s => {
+    const data = SUBJECT_DATA[s.id];
+    let unitDone = 0, unitTotal = 0, conceptDone = 0, conceptTotal = 0;
+    if (data) {
+      data.units.forEach(u => {
+        unitTotal++;
+        let uConcepts = u.concepts ? u.concepts.length : 0;
+        conceptTotal += uConcepts;
+        let uDone = uConcepts > 0 && u.concepts.every(c => isConceptDone(s.id, c.id));
+        if (uDone) unitDone++;
+        u.concepts.forEach(c => { if (isConceptDone(s.id, c.id)) conceptDone++; });
+      });
+    }
+    const p = conceptTotal > 0 ? Math.round(conceptDone / conceptTotal * 100) : 0;
+    html += '<div class="subject-card" onclick="navigate(\'study\', {subject:\'' + s.id + '\'})">';
+    html += '<div class="s-icon">' + s.icon + '</div>';
+    html += '<div class="s-info"><div class="s-name">' + s.name + '</div>';
+    html += '<div class="s-score">当前 ' + State.scores[s.id] + '/' + s.full + ' 分 | 已掌握 ' + conceptDone + '/' + conceptTotal + ' 个知识点</div>';
+    html += '<div class="progress-bar"><div class="fill" style="width:' + p + '%;background:' + s.color + '"></div></div></div>';
+    html += '<div style="font-size:14px;font-weight:600;color:' + s.color + '">' + p + '%</div>';
+    html += '</div>';
+  });
+
+  main.innerHTML = html;
+  // Bind score inputs
+  document.querySelectorAll('.score-input').forEach(inp => {
+    inp.addEventListener('change', function() {
+      const subj = this.dataset.subj;
+      const val = parseInt(this.value);
+      if (!isNaN(val) && val >= 0) { State.scores[subj] = val; saveState(); renderDashboard(); }
+    });
+  });
+}
+
+function isConceptDone(subj, conceptId) {
+  return State.completedConcepts[subj] && State.completedConcepts[subj][conceptId];
+}
+
+// ============ STUDY VIEW ============
+function renderStudyView() {
+  headerTitle.textContent = SUBJECT_DATA[currentSubject].name;
+  const data = SUBJECT_DATA[currentSubject];
+  let html = '<div class="subject-selector">';
+  Object.keys(SUBJECT_DATA).forEach(k => {
+    const sd = SUBJECT_DATA[k];
+    html += '<div class="subject-chip' + (k === currentSubject ? ' active' : '') + '" onclick="setSubject(\'' + k + '\')">' + sd.icon + ' ' + sd.name + '</div>';
+  });
+  html += '</div>';
+
+  if (currentUnit) {
+    // Show single unit detail
+    const unit = data.units.find(u => u.id === currentUnit);
+    if (unit) {
+      html += '<div style="padding:8px 16px"><button class="btn btn-outline btn-sm" onclick="currentUnit=null;renderStudyView()">← 返回单元列表</button></div>';
+      html += '<div style="padding:0 16px"><h3>' + unit.name + '</h3>';
+      html += '<div style="font-size:13px;color:var(--text2)">分值约 ' + (unit.examWeight || '?') + ' | 难度 ' + '⭐'.repeat(unit.difficulty || 1) + '</div></div>';
+      if (currentStudyFocus && currentStudyFocus.subject === currentSubject && currentStudyFocus.unitId === unit.id) {
+        html += '<div class="template-box" style="margin:12px 16px">';
+        html += '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">';
+        html += '<div><div style="font-weight:700;margin-bottom:6px">🎯 本次回看重点</div>';
+        html += '<div style="font-size:13px;line-height:1.7">' + currentStudyFocus.summary + '</div>';
+        if (currentStudyFocus.points && currentStudyFocus.points.length) {
+          html += '<div style="margin-top:8px;font-size:13px;line-height:1.8">' + currentStudyFocus.points.map((point, index) => (index + 1) + '. ' + point).join('<br>') + '</div>';
+        }
+        if (currentStudyFocus.targetConcepts && currentStudyFocus.targetConcepts.length) {
+          html += '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px">';
+          currentStudyFocus.targetConcepts.forEach(item => {
+            html += '<button class="btn btn-outline btn-sm" onclick="jumpToStudyConcept(\'' + item.id + '\')">优先看：' + item.title + '</button>';
+          });
+          html += '</div>';
+        }
+        if (currentStudyFocus.targetActions && currentStudyFocus.targetActions.length) {
+          html += '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px">';
+          currentStudyFocus.targetActions.forEach(item => {
+            html += '<button class="btn btn-outline btn-sm" onclick="' + item.action + '">' + item.label + '</button>';
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+        html += '<button class="btn btn-outline btn-sm" onclick="clearStudyFocus()">清除</button>';
+        html += '</div></div>';
+      }
+      html += renderGuidedStudyPanel(currentSubject, unit);
+      // Concepts
+      (unit.concepts || []).forEach(c => {
+        html += renderConceptCard(currentSubject, c, currentStudyFocus);
+      });
+      // Formulas
+      if (unit.formulas && unit.formulas.length > 0) {
+        html += '<div style="padding:8px 16px;font-weight:600;font-size:15px">📐 核心公式</div>';
+        unit.formulas.forEach(f => {
+          html += '<div class="formula-box" style="margin:8px 16px">';
+          html += '<div class="expr">' + f.expression + '</div>';
+          if (f.description) html += '<div class="desc">' + f.description + '</div>';
+          if (f.variables) html += '<div class="vars">' + Object.entries(f.variables).map(([k,v]) => k + ': ' + v).join(' | ') + '</div>';
+          html += '</div>';
+        });
+      }
+      // MNemonics
+      if (unit.mnemonics && unit.mnemonics.length > 0) {
+        html += '<div style="padding:8px 16px;font-weight:600;font-size:15px">💡 记忆口诀</div>';
+        unit.mnemonics.forEach(m => {
+          html += '<div class="concept-card" style="margin:8px 16px"><div class="cc-mnemonic"><b>' + m.keyword + '</b>: ' + m.mnemonic + '</div></div>';
+        });
+      }
+      // Common mistakes
+      if (unit.commonMistakes && unit.commonMistakes.length > 0) {
+        html += '<div style="padding:8px 16px;font-weight:600;font-size:15px">⚠️ 常见错误</div>';
+        unit.commonMistakes.forEach(m => {
+          html += '<div class="concept-card" style="margin:8px 16px">';
+          html += '<div style="color:var(--danger);text-decoration:line-through;margin-bottom:4px">❌ ' + m.wrong + '</div>';
+          html += '<div style="color:var(--success)">✅ ' + m.correct + '</div></div>';
+        });
+      }
+      // Practice button
+      html += '<div style="text-align:center;padding:12px 16px">';
+      html += '<button class="btn btn-primary" onclick="startPractice(\'' + currentSubject + '\', \'' + unit.id + '\')">📝 练习本单元（' + (unit.quizBank ? unit.quizBank.length : 0) + '题）</button></div>';
+    }
+  } else {
+    // List all units
+    data.units.forEach((u, i) => {
+      const uConcepts = u.concepts ? u.concepts.length : 0;
+      const uDone = uConcepts > 0 ? u.concepts.filter(c => isConceptDone(currentSubject, c.id)).length : 0;
+      const stars = '★'.repeat(u.priority || 1) + '☆'.repeat(5 - (u.priority || 1));
+      html += '<div class="accordion-header" onclick="currentUnit=\'' + u.id + '\';renderStudyView()">';
+      html += '<div><span style="color:var(--primary);margin-right:4px">' + (i+1) + '.</span> ' + u.name + ' <span style="font-size:11px;color:var(--warning)">' + stars + '</span></div>';
+      html += '<div style="font-size:12px;color:var(--text2)">' + (u.examWeight || '') + ' ' + uDone + '/' + uConcepts + ' →</div>';
+      html += '</div>';
+    });
+  }
+  main.innerHTML = html;
+}
+
+function renderConceptCard(subj, c, focus) {
+  const isFocused = !!(focus && focus.subject === subj && Array.isArray(focus.targetConceptIds) && focus.targetConceptIds.includes(c.id));
+  let html = '<div id="concept-' + c.id + '" class="concept-card" style="' + (isFocused ? 'border:2px solid #FF9800;box-shadow:0 0 0 3px rgba(255,152,0,0.12);' : '') + '">';
+  html += '<div class="cc-title">' + (c.highlight ? '⭐ ' : '') + c.title + '</div>';
+  if (isFocused) html += '<div class="cc-highlight" style="background:#FFF3E0"><b>建议优先回看</b>：这张卡和你刚才漏掉的评分点最相关。</div>';
+  html += '<div class="cc-body">' + c.body + '</div>';
+  if (c.highlightText) html += '<div class="cc-highlight">' + c.highlightText + '</div>';
+  if (c.children) {
+    c.children.forEach(ch => {
+      html += '<div class="cc-highlight" style="background:#E3F2FD"><b>' + ch.title + '</b>: ' + (ch.body || '') + '</div>';
+    });
+  }
+  if (c.commonMistake) html += '<div class="cc-mistake"><b>⚠️ 注意</b>: ' + c.commonMistake + '</div>';
+  if (c.mnemonic) html += '<div class="cc-mnemonic"><b>💡 口诀</b>: ' + c.mnemonic + '</div>';
+  html += '<div style="margin-top:8px;display:flex;gap:8px;align-items:center">';
+  html += '<button class="btn btn-sm ' + (isConceptDone(subj, c.id) ? 'btn-primary' : 'btn-outline') + '" onclick="toggleConcept(\'' + subj + '\', \'' + c.id + '\')">' + (isConceptDone(subj, c.id) ? '✓ 已掌握' : '标记掌握') + '</button>';
+  html += '</div></div>';
+  return html;
+}
+
+window.jumpToStudyConcept = function (conceptId) {
+  const target = document.getElementById('concept-' + conceptId);
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
+window.jumpToStudyTop = function () {
+  const topButton = document.querySelector('.template-box');
+  if (!topButton) return;
+  topButton.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+function toggleConcept(subj, cid) {
+  if (!State.completedConcepts[subj]) State.completedConcepts[subj] = {};
+  if (State.completedConcepts[subj][cid]) {
+    delete State.completedConcepts[subj][cid];
+  } else {
+    State.completedConcepts[subj][cid] = true;
+  }
+  saveState();
+  renderStudyView();
+}
+
+function getUnitQuestionBank(subj, unitId) {
+  const bank = window.getSubjectQuestionBank
+    ? window.getSubjectQuestionBank(subj, false)
+    : ((window.QUESTION_BANK && window.QUESTION_BANK[subj]) || []).map(question => Object.assign({}, question));
+  return bank.filter(question => question.unitId === unitId);
+}
+
+function dedupeQuestions(list) {
+  const seen = new Set();
+  return (list || []).filter(question => {
+    if (!question || seen.has(question.id)) return false;
+    seen.add(question.id);
+    return true;
+  });
+}
+
+function isTrustedSprintQuestion(question) {
+  if (!question) return false;
+  const source = String(question.source || '');
+  const sourceCategory = String(question.sourceCategory || '');
+  const id = String(question.id || '');
+  const hasSourceEvidence = !!(question && question.sourceEvidence);
+  const hasValidOptions = !Array.isArray(question.options) || question.options.length === 4;
+  const isShanxiStyle = /山西真题改编|山西高频训练|山西模拟原创/.test(source) || /山西真题|山西高频|山西模拟/.test(sourceCategory);
+  const isWeakGenerated = /^gen-/.test(id) || /功能扩题/.test(source) || /-(?:method|summary-choice|correction-choice|formula-choice|concept|mistake|formula)$/.test(id);
+  return hasSourceEvidence && hasValidOptions && isShanxiStyle && !isWeakGenerated;
+}
+
+function sprintPriority(question) {
+  return [
+    question && question.sourceEvidence ? 1 : 0,
+    Number(question && question.shanxiFrequency || 0),
+    Number(question && question.difficulty || 0)
+  ];
+}
+
+function buildGuidedStageBank(subj, unit, stage) {
+  const bank = getUnitQuestionBank(subj, unit.id);
+  if (!bank.length) return [];
+  const threshold = Math.max(2, Number(unit.difficulty || 1));
+  if (stage === 'foundation') {
+    const foundation = bank.filter(question => question.difficulty <= threshold || /功能扩题|核心概括|方法模板|公式选择|纠偏选择/.test(question.source || ''));
+    return dedupeQuestions((foundation.length ? foundation : bank).sort((a, b) => a.difficulty - b.difficulty)).slice(0, Math.min(10, bank.length));
+  }
+  if (stage === 'template') {
+    const template = bank.filter(question => /功能扩题/.test(question.source || '') || ['作文', '辨析评价', '原因意义'].includes(question.typeCategory));
+    return dedupeQuestions((template.length ? template : bank).sort((a, b) => a.difficulty - b.difficulty)).slice(0, Math.min(10, bank.length));
+  }
+  if (stage === 'sprint') {
+    const trustedReal = bank.filter(question => isTrustedSprintQuestion(question) && /山西真题改编|山西高频训练/.test(question.source || ''));
+    const trustedMock = bank.filter(question => isTrustedSprintQuestion(question) && /山西模拟原创/.test(question.source || ''));
+    const trusted = trustedReal.length ? trustedReal.concat(trustedMock) : bank.filter(isTrustedSprintQuestion);
+    const rankedSprint = trusted
+      .slice()
+      .sort((a, b) => {
+        const aPriority = sprintPriority(a);
+        const bPriority = sprintPriority(b);
+        return bPriority[0] - aPriority[0] || bPriority[1] - aPriority[1] || bPriority[2] - aPriority[2];
+      });
+    return dedupeQuestions(rankedSprint).slice(0, Math.min(10, bank.length));
+  }
+  if (stage === 'wrong') {
+    const wrongIds = new Set(State.attemptLog.filter(item => !item.correct).map(item => item.questionId));
+    return dedupeQuestions(bank.filter(question => wrongIds.has(question.id)));
+  }
+  return dedupeQuestions(bank).slice(0, Math.min(10, bank.length));
+}
+
+function renderGuidedStudyPanel(subj, unit) {
+  const conceptTotal = (unit.concepts || []).length;
+  const conceptDone = (unit.concepts || []).filter(concept => isConceptDone(subj, concept.id)).length;
+  const nextConcept = (unit.concepts || []).find(concept => !isConceptDone(subj, concept.id)) || (unit.concepts || [])[0] || null;
+  const bank = getUnitQuestionBank(subj, unit.id);
+  const templateCount = bank.filter(question => /功能扩题/.test(question.source || '')).length;
+  const shanxiCount = bank.filter(question => /山西/.test(question.source || '')).length;
+  const wrongIds = new Set(State.attemptLog.filter(item => !item.correct).map(item => item.questionId));
+  const wrongCount = bank.filter(question => wrongIds.has(question.id)).length;
+  let html = '<div class="card" style="margin:12px 16px">';
+  html += '<div class="card-header">🎓 本单元带学路径</div>';
+  html += '<div style="font-size:13px;color:var(--text2);line-height:1.7">先理解知识，再套模板，再做基础，最后冲刺山西高频。' + (nextConcept ? (' 当前优先先吃透：<b>' + nextConcept.title + '</b>。') : '') + '</div>';
+  html += '<div style="display:grid;gap:8px;margin-top:12px">';
+  html += '<div class="template-box"><b>第1步 基础讲解</b>：已掌握 ' + conceptDone + '/' + conceptTotal + ' 个核心点，先把概念、公式、易错点看透。</div>';
+  html += '<div class="template-box"><b>第2步 模板抓手</b>：本单元可用模板/方法题 ' + templateCount + ' 题，先练方法再做综合。</div>';
+  html += '<div class="template-box"><b>第3步 山西冲刺</b>：山西导向题 ' + shanxiCount + ' 题，错题待回炉 ' + wrongCount + ' 题。</div>';
+  html += '</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">';
+  html += '<button class="btn btn-outline btn-sm" onclick="startGuidedUnitPractice(\'' + subj + '\', \'' + unit.id + '\', \'foundation\')">先练基础</button>';
+  html += '<button class="btn btn-outline btn-sm" onclick="startGuidedUnitPractice(\'' + subj + '\', \'' + unit.id + '\', \'template\')">再练模板</button>';
+  html += '<button class="btn btn-primary btn-sm" onclick="startGuidedUnitPractice(\'' + subj + '\', \'' + unit.id + '\', \'sprint\')">最后冲刺</button>';
+  if (wrongCount) html += '<button class="btn btn-outline btn-sm" onclick="startGuidedUnitPractice(\'' + subj + '\', \'' + unit.id + '\', \'wrong\')">错题回炉</button>';
+  html += '</div></div>';
+  return html;
+}
+
+function resolveStudyFocusUnit(subjectId, question, subjectData) {
+  const typeText = [question.typeCategory, question.knowledgePoint, question.subKnowledgePoint, question.stem, question.refAnswer].filter(Boolean).join(' ');
+  const explicitUnit = question.unitId || currentUnit;
+  if (subjectId === 'english') {
+    if (/作文|写作|书面表达|建议信|观点类|介绍类|日记/.test(typeText)) return 'en-writing';
+    if (/阅读|主旨|细节|推理|词义|主题句/.test(typeText)) return 'en-reading';
+  }
+  if (subjectId === 'chinese') {
+    if (/作文|写作/.test(typeText)) return 'cn-writing';
+    if (/阅读|赏析|作用|文言/.test(typeText)) return 'cn-reading';
+  }
+  if (subjectId === 'history') {
+    if (/世界史|文艺复兴|工业革命|独立宣言|法国大革命|第一次世界大战|第二次世界大战|冷战/.test(typeText)) return 'hist-world';
+    if (/改革开放|香港回归|澳门回归|一国两制|十一届三中全会|经济特区/.test(typeText)) return 'hist-contemp';
+    if (/鸦片战争|辛亥革命|五四运动|抗日战争|近代史|南京条约|洋务运动/.test(typeText)) return 'hist-modern';
+    if (/秦朝|汉朝|唐朝|宋|元|明|清|古代史|丝绸之路|科举/.test(typeText)) return 'hist-ancient';
+  }
+  if (subjectId === 'daofa') {
+    if (/时事政治|热点新闻|热点|新闻材料|时政/.test(typeText)) return 'df-current';
+    if (/国情|发展理念|生态文明|文化自信|传统文化|社会主义初级阶段/.test(typeText)) return 'df-conditions';
+    if (/宪法|法律|权利|义务|国家机构|核心价值观|法治|未成年人保护/.test(typeText)) return 'df-nation';
+    if (/友谊|师生|亲子|集体|孝敬父母/.test(typeText)) return 'df-rel';
+    if (/情绪|挫折|生命|认识自己/.test(typeText)) return 'df-self';
+  }
+  if (explicitUnit && subjectData && (subjectData.units || []).some(item => item.id === explicitUnit)) {
+    return explicitUnit;
+  }
+  return explicitUnit;
+}
+
+function buildStudyFocusFromGaps(question, missingItems) {
+  const subjectId = question.subject || currentSubject;
+  const subjectData = SUBJECT_DATA[subjectId] || null;
+  const typeText = question.typeCategory || question.knowledgePoint || '本单元重点';
+  const missingTexts = (missingItems || []).map(item => item.item || item).slice(0, 4);
+  const summary = missingTexts.length
+    ? '这次主观题主要漏在“' + typeText + '”的评分点上，回看时不要泛泛重看，要带着缺口回看。'
+    : '这次回看以巩固本单元核心结构和表达为主。';
+  const points = [];
+  if (question.typeCategory === '作文') {
+    points.push('先回看作文模板，确认开头点题、中间分点、结尾收束三段结构。');
+  } else if (question.typeCategory === '原因意义') {
+    points.push('先回看“原因”和“意义”的分层写法，避免混在一起。');
+  } else if (question.typeCategory === '辨析评价') {
+    points.push('先回看辨析题模板，确保“表态-理由-正确说法”三步完整。');
+  } else {
+    points.push('先回看本单元对应的作答模板和评分点表达。');
+  }
+  missingTexts.forEach(text => {
+    points.push('重点补：' + text);
+  });
+  if (question.commonMistake) {
+    points.push('同时注意易错点：' + question.commonMistake);
+  }
+  const normalize = text => String(text || '').replace(/\s+/g, '').replace(/[，。！？；：、“”‘’（）()【】\[\],.!?;:'"\-]/g, '').toLowerCase();
+  const tokens = [question.typeCategory, question.knowledgePoint, question.subKnowledgePoint]
+    .concat(missingTexts)
+    .concat([question.stem, question.refAnswer, question.commonMistake])
+    .join(' ')
+    .split(/[，、；：（）()\s/]+/)
+    .map(token => token.trim())
+    .filter(token => token.length >= 2)
+    .map(token => normalize(token))
+    .filter(Boolean)
+    .filter((token, index, list) => list.indexOf(token) === index);
+
+  const initialUnitId = resolveStudyFocusUnit(subjectId, question, subjectData);
+  const hasExplicitFocusOverride = !!(initialUnitId && initialUnitId !== (question.unitId || currentUnit));
+  const scoreUnitFocus = unit => {
+    const concepts = unit && Array.isArray(unit.concepts) ? unit.concepts : [];
+    let score = 0;
+    const matchedConcepts = concepts.filter(concept => {
+      const haystack = normalize([
+        unit.name,
+        concept.title,
+        concept.body,
+        concept.highlightText,
+        concept.mnemonic,
+        concept.commonMistake,
+        (concept.children || []).map(item => item.title + ' ' + (item.body || '')).join(' ')
+      ].join(' '));
+      const tokenScore = tokens.reduce((total, token) => total + (haystack.includes(token) ? 1 : 0), 0);
+      if (tokenScore > 0) score += tokenScore;
+      return tokenScore > 0;
+    }).slice(0, 3).map(concept => ({ id: concept.id, title: concept.title }));
+    if (unit && unit.id === initialUnitId) score += 1;
+    return { score, matchedConcepts };
+  };
+
+  let unitId = initialUnitId;
+  let unit = subjectData ? (subjectData.units || []).find(item => item.id === unitId) : null;
+  let bestFocus = scoreUnitFocus(unit || {});
+  if (subjectData && Array.isArray(subjectData.units)) {
+    subjectData.units.forEach(candidate => {
+      const candidateFocus = scoreUnitFocus(candidate);
+      const shouldReplace = hasExplicitFocusOverride
+        ? bestFocus.score === 0 || candidateFocus.score >= bestFocus.score + 3
+        : candidateFocus.score > bestFocus.score;
+      if (shouldReplace) {
+        unit = candidate;
+        unitId = candidate.id;
+        bestFocus = candidateFocus;
+      }
+    });
+  }
+  const targetConcepts = bestFocus.matchedConcepts;
+  if (unit && unit.id !== question.unitId) {
+    points.unshift('这类缺口更适合先回看《' + unit.name + '》里的讲解和模板。');
+  }
+  const targetActions = [
+    { label: '先看本单元带学路径', action: 'jumpToStudyTop()' }
+  ];
+  if (/作文|写作|材料|评价|意义|模板/.test(String(question.typeCategory || '') + ' ' + missingTexts.join(' '))) {
+    targetActions.push({
+      label: '优先练模板',
+      action: "startGuidedUnitPractice('" + subjectId + "', '" + unitId + "', 'template')"
+    });
+  }
+  return {
+    subject: subjectId,
+    unitId: unitId,
+    unitName: unit ? unit.name : '',
+    summary: summary,
+    points: points,
+    targetConceptIds: targetConcepts.map(item => item.id),
+    targetConcepts: targetConcepts,
+    targetActions: targetActions
+  };
+}
+
+window.startGuidedUnitPractice = function (subj, unitId, stage) {
+  const unit = SUBJECT_DATA[subj].units.find(item => item.id === unitId);
+  if (!unit) return;
+  const bank = buildGuidedStageBank(subj, unit, stage);
+  if (!bank.length) {
+    alert(stage === 'wrong' ? '当前还没有本单元错题。' : '该阶段暂时没有可练题目。');
+    return;
+  }
+  const titleMap = {
+    foundation: '基础巩固',
+    template: '模板拆解',
+    sprint: '山西冲刺',
+    wrong: '错题回炉'
+  };
+  currentSubject = subj;
+  currentUnit = unitId;
+  window.startQuizSession(bank, {
+    type: 'unit',
+    subject: subj,
+    unitId: unitId,
+    guidedStage: stage,
+    title: SUBJECT_DATA[subj].name + ' · ' + unit.name + ' · ' + titleMap[stage]
+  }, stage === 'wrong' ? 'wrong' : 'all');
+};
+
+window.reviewCurrentUnit = function () {
+  const currentQuestion = quizQuestions[quizIndex] || null;
+  const targetSubject = (currentQuestion && currentQuestion.subject) || currentSubject;
+  const focusUnit = currentStudyFocus && currentStudyFocus.subject === targetSubject ? currentStudyFocus.unitId : null;
+  const targetUnit = focusUnit || (currentQuestion && currentQuestion.unitId) || (currentUnit && currentUnit !== '__recommended__' ? currentUnit : null);
+  if (!targetSubject || !targetUnit) {
+    alert('当前练习没有绑定到具体单元，请先从单元练习进入。');
+    return;
+  }
+  quizQuestions = [];
+  navigate('study', { subject: targetSubject, unit: targetUnit });
+};
+
+window.reviewCurrentQuestionGaps = function () {
+  const question = quizQuestions[quizIndex];
+  if (!question) return;
+  const answerState = (State.quizHistory && State.quizHistory[question.id]) || null;
+  if (!answerState || !Array.isArray(question.rubric) || !question.rubric.length) {
+    reviewCurrentUnit();
+    return;
+  }
+  const normalize = text => String(text || '').replace(/\s+/g, '').replace(/[，。！？；：、“”‘’（）()【】\[\],.!?;:'"\-]/g, '').toLowerCase();
+  const answerText = normalize(answerState.answered);
+  const missing = question.rubric
+    .map(item => {
+      const keywords = String(item || '').split(/[，、；：（）()\s/]+/).map(token => token.trim()).filter(token => token.length >= 2);
+      const matched = keywords.length
+        ? keywords.some(keyword => answerText.includes(normalize(keyword)))
+        : answerText.includes(normalize(item));
+      return { item: item, matched: matched };
+    })
+    .filter(item => !item.matched);
+  currentStudyFocus = buildStudyFocusFromGaps(question, missing);
+  reviewCurrentUnit();
+};
+
+window.clearStudyFocus = function () {
+  currentStudyFocus = null;
+  renderStudyView();
+};
+
+// ============ PRACTICE VIEW ============
+function startPractice(subj, unitId) {
+  const unit = SUBJECT_DATA[subj].units.find(u => u.id === unitId);
+  if (!unit || !unit.quizBank || unit.quizBank.length === 0) {
+    alert('该单元暂无练习题');
+    return;
+  }
+  currentSubject = subj;
+  currentUnit = unitId;
+  quizQuestions = unit.quizBank;
+  quizIndex = 0;
+  quizMode = 'all';
+  navigate('practice');
+}
+
+function renderPracticeView() {
+  headerTitle.textContent = '练习';
+  if (quizQuestions.length === 0) {
+    main.innerHTML = '<div class="empty-state"><div class="icon">📝</div><div>请先从学习页面选择要练习的单元</div></div>';
+    return;
+  }
+
+  const q = quizQuestions[quizIndex];
+  let html = '';
+  // Mode bar
+  html += '<div class="mode-bar">';
+  ['all','wrong','random'].forEach(m => {
+    html += '<div class="mode-chip' + (quizMode === m ? ' active' : '') + '" onclick="switchQuizMode(\'' + m + '\')">' + ({all:'全部',wrong:'仅错题',random:'随机10题'}[m]) + '</div>';
+  });
+  html += '</div>';
+
+  // Progress
+  html += '<div style="padding:0 16px;font-size:13px;color:var(--text2)">第 ' + (quizIndex+1) + '/' + quizQuestions.length + ' 题</div>';
+  html += '<div class="progress-bar" style="margin:4px 16px"><div class="fill" style="width:' + Math.round((quizIndex+1)/quizQuestions.length*100) + '%;background:var(--primary)"></div></div>';
+
+  // Question
+  html += '<div class="quiz-card">';
+  html += '<div class="q-stem">' + (quizIndex+1) + '. ' + q.stem + '</div>';
+
+  const options = q.type === 'truefalse' ? [{key:'A',text:'正确'},{key:'B',text:'错误'}] : q.options;
+  options.forEach(opt => {
+    let cls = 'quiz-option';
+    if (State.quizHistory[q.id]) {
+      if (opt.key === q.answer) cls += ' correct';
+      else if (opt.key === State.quizHistory[q.id].answered) cls += ' wrong';
+    }
+    html += '<div class="' + cls + '" onclick="answerQuiz(\'' + q.id + '\', \'' + opt.key + '\')">' + opt.key + '. ' + opt.text + '</div>';
+  });
+
+  // Feedback
+  const hist = State.quizHistory[q.id];
+  if (hist) {
+    html += '<div class="quiz-feedback show ' + (hist.correct ? 'correct' : 'wrong') + '">';
+    html += (hist.correct ? '✅ 正确！' : '❌ 错误！') + (q.explanation ? ' ' + q.explanation : '');
+    html += '</div>';
+  }
+
+  // Navigation
+  html += '<div class="quiz-nav">';
+  html += '<button class="btn btn-outline" ' + (quizIndex===0?'disabled':'') + ' onclick="quizIndex=Math.max(0,quizIndex-1);renderPracticeView()">上一题</button>';
+  html += '<button class="btn btn-primary" onclick="' + (quizIndex<quizQuestions.length-1 ? 'quizIndex++;renderPracticeView()' : 'finishQuiz()') + '">' + (quizIndex<quizQuestions.length-1 ? '下一题' : '完成') + '</button>';
+  html += '</div>';
+  html += '</div>';
+
+  main.innerHTML = html;
+}
+
+function answerQuiz(qid, answer) {
+  if (State.quizHistory[qid]) return; // Already answered
+  const q = quizQuestions[quizIndex];
+  const correct = answer === q.answer;
+  State.quizHistory[qid] = { answered: answer, correct, timestamp: Date.now() };
+  if (!State.quizScores[currentSubject]) State.quizScores[currentSubject] = { total: 0, correct: 0 };
+  State.quizScores[currentSubject].total++;
+  if (correct) State.quizScores[currentSubject].correct++;
+  saveState();
+  renderPracticeView();
+}
+
+function switchQuizMode(mode) {
+  quizMode = mode;
+  const unit = SUBJECT_DATA[currentSubject].units.find(u => u.id === currentUnit);
+  if (!unit) return;
+  let bank = unit.quizBank;
+  if (mode === 'wrong') {
+    bank = bank.filter(q => State.quizHistory[q.id] && !State.quizHistory[q.id].correct);
+    if (bank.length === 0) { alert('暂无错题，继续加油！'); bank = unit.quizBank; }
+  } else if (mode === 'random') {
+    bank = [...bank].sort(() => Math.random() - 0.5).slice(0, Math.min(10, bank.length));
+  }
+  quizQuestions = bank;
+  quizIndex = 0;
+  renderPracticeView();
+}
+
+function finishQuiz() {
+  const total = quizQuestions.length;
+  const correct = quizQuestions.filter(q => State.quizHistory[q.id] && State.quizHistory[q.id].correct).length;
+  const pct = Math.round(correct / total * 100);
+  let emoji = pct >= 80 ? '🎉' : pct >= 60 ? '👍' : '💪';
+  main.innerHTML = '<div class="empty-state"><div class="icon">' + emoji + '</div><div style="font-size:24px;font-weight:700;margin:8px 0">' + correct + '/' + total + '</div><div>正确率 ' + pct + '%</div>';
+  main.innerHTML += '<div style="text-align:center;margin-top:16px"><button class="btn btn-primary" onclick="switchQuizMode(\'wrong\')">重做错题</button> ';
+  main.innerHTML += '<button class="btn btn-outline" onclick="currentUnit=null;quizQuestions=[];navigate(\'study\')">返回学习</button></div>';
+}
+
+// ============ PLAN VIEW ============
+function renderPlanView() {
+  headerTitle.textContent = '学习计划';
+  const dt = new Date(State.examDate);
+  const now = new Date();
+  const daysLeft = Math.max(1, Math.ceil((dt - now) / (1000*60*60*24)));
+
+  let html = '<div class="countdown" style="background:linear-gradient(135deg,#FF9800,#FFC107)"><div class="days">' + daysLeft + '</div><div class="label">剩余天数</div></div>';
+
+  // Check if plan needs regeneration
+  const today = new Date().toISOString().slice(0,10);
+  if (!State.planGenerated || State.planGenerated !== today) {
+    generatePlan(daysLeft);
+    State.planGenerated = today;
+    saveState();
+  }
+  if (!State.dailyPlan) generatePlan(daysLeft);
+
+  // Today's tasks
+  html += '<div class="card"><div class="card-header">📋 今日任务 (' + today + ')</div>';
+  const tasks = State.dailyPlan[0] || [];
+  tasks.forEach((t, i) => {
+    const taskKey = today + '_' + i;
+    const done = State.planCompleted[taskKey];
+    html += '<div class="task-row">';
+    html += '<div class="task-check' + (done ? ' done' : '') + '" onclick="toggleTask(\'' + taskKey + '\')">' + (done ? '✓' : '') + '</div>';
+    html += '<div class="task-info">' + SUBJECT_DATA[t.subject].icon + ' ' + t.name;
+    html += '<div style="font-size:12px;color:var(--text2);margin-top:4px">按 学讲解 → 练基础 → 冲刺 的顺序完成</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">';
+    html += '<button class="btn btn-outline btn-sm" onclick="navigate(\'study\', {subject:\'' + t.subject + '\', unit:\'' + t.unitId + '\'})">学讲解</button>';
+    html += '<button class="btn btn-outline btn-sm" onclick="startGuidedUnitPractice(\'' + t.subject + '\', \'' + t.unitId + '\', \'foundation\')">练基础</button>';
+    html += '<button class="btn btn-primary btn-sm" onclick="startGuidedUnitPractice(\'' + t.subject + '\', \'' + t.unitId + '\', \'sprint\')">冲刺</button>';
+    html += '</div></div>';
+    html += '<div class="task-time">' + t.minutes + '分钟</div></div>';
+  });
+  html += '</div>';
+
+  // Weekly overview
+  html += '<div class="card"><div class="card-header">📅 未来7天计划</div>';
+  html += '<div style="overflow-x:auto"><table style="width:100%;font-size:11px;border-collapse:collapse">';
+  const dayNames = ['日','一','二','三','四','五','六'];
+  for (let d = 0; d < 7; d++) {
+    const dayTasks = State.dailyPlan[d] || [];
+    const date = new Date(now);
+    date.setDate(date.getDate() + d);
+    const ds = (date.getMonth()+1) + '/' + date.getDate();
+    html += '<tr><td style="padding:6px;font-weight:600;white-space:nowrap">' + ds + ' 周' + dayNames[date.getDay()] + '</td>';
+    html += '<td style="padding:6px">' + dayTasks.map(t => SUBJECT_DATA[t.subject].icon + t.name).join(' | ') + '</td></tr>';
+  }
+  html += '</table></div></div>';
+
+  html += '<div style="text-align:center;padding:12px">';
+  html += '<button class="btn btn-primary" onclick="generatePlan(' + daysLeft + ');renderPlanView()">🔄 重新生成计划</button></div>';
+
+  main.innerHTML = html;
+}
+
+function generatePlan(daysLeft) {
+  const allTasks = [];
+  Object.keys(SUBJECT_DATA).forEach(subjId => {
+    const data = SUBJECT_DATA[subjId];
+    data.units.forEach(u => {
+      allTasks.push({ subject: subjId, name: u.name, unitId: u.id, priority: u.priority || 3, difficulty: u.difficulty || 1, minutes: u.estimatedMinutes || 35 });
+    });
+  });
+  // Sort by priority DESC, difficulty ASC
+  allTasks.sort((a, b) => b.priority - a.priority || a.difficulty - b.difficulty);
+
+  // Distribute across days, 2-3 subjects/day, ~150 min max
+  const plan = [];
+  let taskIdx = 0;
+  for (let d = 0; d < 7; d++) {
+    const dayTasks = [];
+    let dayMin = 0;
+    while (taskIdx < allTasks.length && dayTasks.length < 3 && dayMin < 170) {
+      const t = allTasks[taskIdx];
+      // Avoid same subject twice in a day and avoid too many same subject across days
+      const hasSubject = dayTasks.some(dt => dt.subject === t.subject);
+      if (!hasSubject && dayMin + t.minutes <= 180) {
+        dayTasks.push(t);
+        dayMin += t.minutes;
+      }
+      taskIdx++;
+      if (taskIdx >= allTasks.length) {
+        taskIdx = 0; // Wrap around
+        // Shuffle subjects to avoid repetition
+        allTasks.sort((a, b) => (Math.random() - 0.5));
+      }
+    }
+    plan.push(dayTasks);
+  }
+  State.dailyPlan = plan;
+  saveState();
+}
+
+function toggleTask(taskKey) {
+  if (State.planCompleted[taskKey]) {
+    delete State.planCompleted[taskKey];
+  } else {
+    State.planCompleted[taskKey] = true;
+  }
+  saveState();
+  renderPlanView();
+}
+
+// ============ INIT ============
+loadState();
+render();
+// Adjust for mobile URL bar
+window.addEventListener('resize', () => {
+  document.documentElement.style.setProperty('--vh', window.innerHeight + 'px');
+});
+</script>
+<script>
+(function () {
+  const SUBJECT_ORDER = ['physics', 'chemistry', 'chinese', 'math', 'history', 'daofa', 'english'];
+
+  let quizSource = null;
+  let currentSessionAnswers = {};
+  let currentSessionStartedAt = 0;
+
+  function uniqueById(list) {
+    const seen = new Set();
+    return (list || []).filter(item => {
+      if (!item || !item.id || seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  }
+
+  function escapeQuizText(text) {
+    return String(text == null ? '' : text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getGuidedStageMeta(stage) {
+    const map = {
+      foundation: { title: '讲透例题', intro: '先把这题当例题学会，不急着抢答。', action: '先审题，再对应概念和公式。' },
+      template: { title: '模板拆解', intro: '先搭答题框架，再把条件和材料塞进去。', action: '先写结构，再补内容。' },
+      sprint: { title: '冲刺实战', intro: '按山西中考节奏作答，先稳分，再攻难点。', action: '先抓得分点，再处理高难信息。' },
+      wrong: { title: '错题回炉', intro: '重点不是重做，而是先找到上次失分根因。', action: '先说错因，再重新作答。' }
+    };
+    return map[stage] || null;
+  }
+
+  function getQuestionCoachSteps(question, stage) {
+    const focus = question.typeCategory || question.knowledgePoint || '核心知识点';
+    const subFocus = question.subKnowledgePoint || question.knowledgePoint || '关键条件';
+    const mistake = question.commonMistake || '注意回到定义、条件和单位再判断';
+    const method = question.typeCategory === '作文'
+      ? '先列提纲，再补关键词句，最后组织成段。'
+      : question.typeCategory === '原因意义'
+        ? '按“原因/意义”分层写，避免混写。'
+        : question.typeCategory === '辨析评价'
+          ? '先判断观点是否片面，再给理由和正确说法。'
+          : Array.isArray(question.options)
+            ? '先排除明显错误项，再比较最符合条件的一项。'
+            : '先列步骤，再按步骤求解或作答。';
+    if (stage === 'template') {
+      return [
+        '题型定位：这题属于“' + focus + '”，先想标准模板。',
+        '结构骨架：围绕“' + subFocus + '”先搭答案框架。',
+        '模板提醒：' + method,
+        '易错点：' + mistake
+      ];
+    }
+    if (stage === 'sprint') {
+      return [
+        '先拿基础分：先做最稳的第一步，不在难点卡太久。',
+        '抓关键词：锁定“' + subFocus + '”对应的条件或材料。',
+        '得分动作：' + method,
+        '避坑提醒：' + mistake
+      ];
+    }
+    if (stage === 'wrong') {
+      return [
+        '先复盘：上次主要卡在什么地方？',
+        '回到知识点：这题核心是“' + focus + '”。',
+        '重做顺序：' + method,
+        '这次必须避开：' + mistake
+      ];
+    }
+    return [
+      '先审题：这题核心知识点是“' + focus + '”。',
+      '再定位：重点看“' + subFocus + '”这一层信息。',
+      '解题抓手：' + method,
+      '易错提醒：' + mistake
+    ];
+  }
+
+  function renderGuidedPracticeCard(question, answerState) {
+    const stage = quizSource && quizSource.guidedStage;
+    const meta = getGuidedStageMeta(stage);
+    if (!meta) return '';
+    const steps = getQuestionCoachSteps(question, stage);
+    let html = '<div class="template-box" style="margin:12px 16px 8px">';
+    html += '<div style="font-weight:700;margin-bottom:6px">🧭 ' + escapeQuizText(meta.title) + '</div>';
+    html += '<div style="font-size:13px;line-height:1.7">' + escapeQuizText(meta.intro) + ' ' + escapeQuizText(meta.action) + '</div>';
+    html += '<div style="margin-top:8px;font-size:13px;line-height:1.8">';
+    steps.forEach((step, index) => {
+      html += '<div>' + (index + 1) + '. ' + escapeQuizText(step) + '</div>';
+    });
+    html += '</div>';
+    if (answerState) {
+      html += '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(0,0,0,0.12);font-size:13px;line-height:1.7">';
+      html += answerState.correct
+        ? '复盘：这题做对了，也要确认自己是不是按步骤拿分，而不是只靠感觉。'
+        : '复盘：先看自己是审题偏了、模板漏了，还是被易错点带偏了，再继续下一题。';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function getOpenAnswerTemplate(question) {
+    if (question.type === 'fill') return '';
+    if (question.typeCategory === '作文') {
+      return '【开头点题】\n1. \n\n【中间要点一】\n1. \n2. \n\n【中间要点二】\n1. \n2. \n\n【结尾收束】\n1. ';
+    }
+    if (question.typeCategory === '原因意义') {
+      return '【原因】\n1. \n2. \n\n【意义】\n1. \n2. ';
+    }
+    if (question.typeCategory === '辨析评价') {
+      return '【表态】这一观点____。\n\n【理由】\n1. \n2. \n\n【正确说法/补充】\n1. ';
+    }
+    if (Array.isArray(question.rubric) && question.rubric.length) {
+      return question.rubric.map((item, index) => '【第' + (index + 1) + '点】' + item + '\n').join('\n');
+    }
+    return '【先写结论】\n1. \n\n【再写依据/步骤】\n1. \n2. \n\n【最后补完整表达】\n1. ';
+  }
+
+  function renderOpenAnswerCoach(question) {
+    const template = getOpenAnswerTemplate(question);
+    if (!template) return '';
+    const coachTitle = question.typeCategory === '作文'
+      ? '写作骨架'
+      : question.typeCategory === '原因意义'
+        ? '原因意义骨架'
+        : question.typeCategory === '辨析评价'
+          ? '辨析评价骨架'
+          : '作答骨架';
+    return '<div class="template-box" style="margin-bottom:12px">'
+      + '<div style="font-weight:700;margin-bottom:6px">✍️ ' + escapeQuizText(coachTitle) + '</div>'
+      + '<div style="font-size:13px;color:var(--text2);margin-bottom:8px">先按骨架分点写，再补充材料或关键词，能明显减少漏点。</div>'
+      + '<div style="white-space:pre-wrap;font-size:13px;line-height:1.7">' + escapeQuizText(template) + '</div>'
+      + '<div style="margin-top:8px"><button class="btn btn-outline btn-sm" onclick="useOpenAnswerTemplate()">填入作答骨架</button></div>'
+      + '</div>';
+  }
+
+  function normalizeAnswerText(text) {
+    return String(text || '').replace(/\s+/g, '').replace(/[，。！？；：、“”‘’（）()【】\[\],.!?;:'"\-]/g, '').toLowerCase();
+  }
+
+  function extractRubricKeywords(item) {
+    return String(item || '')
+      .split(/[，、；：（）()\s/]+/)
+      .map(token => token.trim())
+      .filter(token => token.length >= 2);
+  }
+
+  function analyzeRubricCoverage(answerText, rubric) {
+    const normalizedAnswer = normalizeAnswerText(answerText);
+    return (rubric || []).map(item => {
+      const keywords = extractRubricKeywords(item);
+      const matched = keywords.length
+        ? keywords.some(keyword => normalizedAnswer.includes(normalizeAnswerText(keyword)))
+        : normalizedAnswer.includes(normalizeAnswerText(item));
+      return {
+        item: item,
+        matched: matched
+      };
+    });
+  }
+
+  function ensureStateShape() {
+    State.attemptLog = Array.isArray(State.attemptLog) ? State.attemptLog : [];
+    State.masteryMap = State.masteryMap || {};
+    State.recommendationHistory = Array.isArray(State.recommendationHistory) ? State.recommendationHistory : [];
+    State.quizScores = State.quizScores || {};
+    State.quizHistory = State.quizHistory || {};
+  }
+
+  function rebuildQuestionBank() {
+    if (window.QuestionBankEngine && typeof window.QuestionBankEngine.rebuild === 'function') {
+      window.QuestionBankEngine.rebuild(SUBJECT_DATA);
+    }
+  }
+
+  function refreshMasteryMap() {
+    State.masteryMap = window.PracticeAnalytics.buildMasteryMap(State, window.QUESTION_INDEX || {});
+  }
+
+  function startQuizSession(questions, source, mode) {
+    quizQuestions = uniqueById(questions);
+    quizSource = source || null;
+    quizMode = mode || 'all';
+    quizIndex = 0;
+    currentSessionAnswers = {};
+    currentSessionStartedAt = Date.now();
+    navigate('practice');
+  }
+
+  window.startQuizSession = startQuizSession;
+
+  function getSubjectQuestionBank(subj, comprehensiveOnly) {
+    return window.QuestionBankEngine.getSubjectBank(subj, !!comprehensiveOnly)
+      .map(question => Object.assign({}, question));
+  }
+
+  window.getSubjectQuestionBank = getSubjectQuestionBank;
+
+  function getAllQuestionBank(comprehensiveOnly) {
+    return window.QuestionBankEngine.getAll(!!comprehensiveOnly)
+      .map(question => Object.assign({}, question));
+  }
+
+  function getActiveBank() {
+    if (!quizSource) return [];
+    if (quizSource.type === 'unit') {
+      return getSubjectQuestionBank(quizSource.subject, false).filter(question => question.unitId === quizSource.unitId);
+    }
+    if (quizSource.type === 'subject') return getSubjectQuestionBank(quizSource.subject, false);
+    if (quizSource.type === 'subject-comprehensive') return getSubjectQuestionBank(quizSource.subject, true);
+    if (quizSource.type === 'all-comprehensive') return getAllQuestionBank(true);
+    if (quizSource.type === 'all') return getAllQuestionBank(false);
+    if (quizSource.type === 'recommendation') {
+      return window.QuestionBankEngine.getByIds(quizSource.questionIds || []).map(question => Object.assign({}, question));
+    }
+    return [];
+  }
+
+  function getSessionAnswer(questionId) {
+    return currentSessionAnswers[questionId] || null;
+  }
+
+  function getLegacyAnswer(questionId) {
+    return State.quizHistory[questionId] || null;
+  }
+
+  function getDisplayAnswer(questionId) {
+    return getSessionAnswer(questionId) || getLegacyAnswer(questionId);
+  }
+
+  function markQuestionAttempt(question, payload) {
+    const attemptIndex = window.PracticeAnalytics.countQuestionAttempts(State, question.id) + 1;
+    const record = window.PracticeAnalytics.buildAttemptRecord(question, {
+      correct: payload.correct,
+      answerTime: payload.answerTime,
+      attempts: attemptIndex,
+      timestamp: payload.timestamp,
+      mistakeReason: payload.mistakeReason || ''
+    });
+    State.attemptLog.push(record);
+    State.quizHistory[question.id] = {
+      answered: payload.answered,
+      correct: !!payload.correct,
+      timestamp: payload.timestamp,
+      answerTime: payload.answerTime,
+      mistakeReason: payload.mistakeReason || '',
+      openEnded: !!payload.openEnded
+    };
+    if (!State.quizScores[question.subject]) State.quizScores[question.subject] = { total: 0, correct: 0 };
+    State.quizScores[question.subject].total += 1;
+    if (payload.correct) State.quizScores[question.subject].correct += 1;
+    refreshMasteryMap();
+    saveState();
+  }
+
+  function summarizeCurrentSubject() {
+    return window.PracticeAnalytics.summarizeSubject(State, currentSubject, window.QUESTION_BANK || {}, window.QUESTION_INDEX || {});
+  }
+
+  function getPracticePaperSubject() {
+    return practicePaperConfig.subject || currentSubject || SUBJECT_ORDER[0];
+  }
+
+  function getPracticePaperBank(subjectId) {
+    return getSubjectQuestionBank(subjectId, false);
+  }
+
+  function getPracticePaperSources(subjectId) {
+    return getPracticePaperBank(subjectId)
+      .map(question => question.sourceCategory)
+      .filter(Boolean)
+      .filter((source, index, list) => list.indexOf(source) === index)
+      .sort();
+  }
+
+  function getDifficultyRange(value) {
+    if (value === 'basic') return [1, 2];
+    if (value === 'mid') return [2, 3];
+    if (value === 'hard') return [4, 5];
+    return null;
+  }
+
+  function filterConfiguredPracticeBank(subjectId) {
+    let bank = getPracticePaperBank(subjectId);
+    if (practicePaperConfig.unitId) {
+      bank = bank.filter(question => question.unitId === practicePaperConfig.unitId);
+    }
+    if (practicePaperConfig.typeCategory) {
+      bank = bank.filter(question => question.typeCategory === practicePaperConfig.typeCategory);
+    }
+    if (practicePaperConfig.source) {
+      bank = bank.filter(question => question.sourceCategory === practicePaperConfig.source);
+    }
+    const difficultyRange = getDifficultyRange(practicePaperConfig.difficulty);
+    if (difficultyRange) {
+      bank = bank.filter(question => question.difficulty >= difficultyRange[0] && question.difficulty <= difficultyRange[1]);
+    }
+    return bank;
+  }
+
+  function syncPracticePaperConfig() {
+    const subjectId = getPracticePaperSubject();
+    const units = (SUBJECT_DATA[subjectId] && SUBJECT_DATA[subjectId].units) || [];
+    if (practicePaperConfig.unitId && !units.some(unit => unit.id === practicePaperConfig.unitId)) {
+      practicePaperConfig.unitId = '';
+    }
+    const types = getPracticePaperBank(subjectId)
+      .map(question => question.typeCategory)
+      .filter(Boolean)
+      .filter((type, index, list) => list.indexOf(type) === index)
+      .sort();
+    if (practicePaperConfig.typeCategory && types.indexOf(practicePaperConfig.typeCategory) === -1) {
+      practicePaperConfig.typeCategory = '';
+    }
+    const sources = getPracticePaperSources(subjectId);
+    if (practicePaperConfig.source && sources.indexOf(practicePaperConfig.source) === -1) {
+      practicePaperConfig.source = '';
+    }
+  }
+
+  function renderPaperConfigCard() {
+    syncPracticePaperConfig();
+    const subjectId = getPracticePaperSubject();
+    const units = (SUBJECT_DATA[subjectId] && SUBJECT_DATA[subjectId].units) || [];
+    const types = getPracticePaperBank(subjectId)
+      .map(question => question.typeCategory)
+      .filter(Boolean)
+      .filter((type, index, list) => list.indexOf(type) === index)
+      .sort();
+    const sources = getPracticePaperSources(subjectId);
+    const filteredCount = filterConfiguredPracticeBank(subjectId).length;
+    const buttonDisabled = filteredCount ? '' : ' disabled';
+    let html = '<div class="card"><div class="card-header">🛠 可配置组卷</div>';
+    html += '<div class="paper-config-grid">';
+    html += '<div class="paper-config-item"><label>学科</label><select class="paper-config-select" onchange="updatePracticePaperConfig(\'subject\', this.value)">';
+    SUBJECT_ORDER.forEach(subj => {
+      html += '<option value="' + subj + '"' + (subj === subjectId ? ' selected' : '') + '>' + escapeQuizText(SUBJECT_DATA[subj].name) + '</option>';
+    });
+    html += '</select></div>';
+    html += '<div class="paper-config-item"><label>难度</label><select class="paper-config-select" onchange="updatePracticePaperConfig(\'difficulty\', this.value)">';
+    [['all', '全部难度'], ['basic', '基础保分'], ['mid', '中档提分'], ['hard', '压轴突破']].forEach(item => {
+      html += '<option value="' + item[0] + '"' + (practicePaperConfig.difficulty === item[0] ? ' selected' : '') + '>' + item[1] + '</option>';
+    });
+    html += '</select></div>';
+    html += '<div class="paper-config-item"><label>章节</label><select class="paper-config-select" onchange="updatePracticePaperConfig(\'unitId\', this.value)">';
+    html += '<option value="">全部章节</option>';
+    units.forEach(unit => {
+      html += '<option value="' + unit.id + '"' + (practicePaperConfig.unitId === unit.id ? ' selected' : '') + '>' + escapeQuizText(unit.name) + '</option>';
+    });
+    html += '</select></div>';
+    html += '<div class="paper-config-item"><label>题型</label><select class="paper-config-select" onchange="updatePracticePaperConfig(\'typeCategory\', this.value)">';
+    html += '<option value="">自动选择高频题型</option>';
+    types.forEach(type => {
+      html += '<option value="' + escapeQuizText(type) + '"' + (practicePaperConfig.typeCategory === type ? ' selected' : '') + '>' + escapeQuizText(type) + '</option>';
+    });
+    html += '</select></div>';
+    html += '<div class="paper-config-item"><label>来源/用途分类</label><select class="paper-config-select" onchange="updatePracticePaperConfig(\'source\', this.value)">';
+    html += '<option value="">全部来源</option>';
+    sources.forEach(source => {
+      html += '<option value="' + escapeQuizText(source) + '"' + (practicePaperConfig.source === source ? ' selected' : '') + '>' + escapeQuizText(source) + '</option>';
+    });
+    html += '</select></div>';
+    html += '<div class="paper-config-item"><label>题量</label><select class="paper-config-select" onchange="updatePracticePaperConfig(\'count\', this.value)">';
+    [['8', '8题'], ['12', '12题'], ['16', '16题'], ['20', '20题']].forEach(item => {
+      html += '<option value="' + item[0] + '"' + (practicePaperConfig.count === item[0] ? ' selected' : '') + '>' + item[1] + '</option>';
+    });
+    html += '</select></div>';
+    html += '</div>';
+    html += '<div class="flex gap-8 flex-wrap mt-16">';
+    html += '<button class="btn btn-outline"' + buttonDisabled + ' onclick="startConfiguredPaper(\'chapter-paper\')">按章节组卷</button>';
+    html += '<button class="btn btn-outline"' + buttonDisabled + ' onclick="startConfiguredPaper(\'special-paper\')">按题型组卷</button>';
+    html += '<button class="btn btn-outline"' + buttonDisabled + ' onclick="startConfiguredPaper(\'mistake-paper\')">按错题组卷</button>';
+    html += '<button class="btn btn-outline"' + buttonDisabled + ' onclick="startConfiguredPaper(\'sprint-paper\')">按冲刺目标组卷</button>';
+    html += '</div>';
+    html += '<div class="paper-config-tip">当前按“' + escapeQuizText(SUBJECT_DATA[subjectId].name) + ' / ' + escapeQuizText(practicePaperConfig.unitId ? (units.find(unit => unit.id === practicePaperConfig.unitId) || {}).name || '全部章节' : '全部章节') + ' / ' + escapeQuizText(practicePaperConfig.typeCategory || '自动题型') + ' / ' + escapeQuizText(practicePaperConfig.source || '全部来源') + ' / ' + escapeQuizText(({ all: '全部难度', basic: '基础保分', mid: '中档提分', hard: '压轴突破' })[practicePaperConfig.difficulty] || '全部难度') + ' / ' + escapeQuizText(practicePaperConfig.count + '题') + '”生成；当前条件下匹配 ' + filteredCount + ' 题。</div>';
+    html += '</div>';
+    return html;
+  }
+
+  function buildPracticeOverviewCard(subjectId) {
+    const summary = window.PracticeAnalytics.summarizeSubject(State, subjectId, window.QUESTION_BANK || {}, window.QUESTION_INDEX || {});
+    const percent = Math.round((summary.accuracy || 0) * 100);
+    const weak = (summary.weakTags || []).slice(0, 3).map(item => item.tag).join(' / ') || '先开始刷题，系统会自动识别薄弱点';
+    const startAction = mode => 'startRecommendedPractice(\'' + mode + '\', \'' + subjectId + '\')';
+    return '<div class="subject-card" style="display:block">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+      + '<div><div class="s-name">' + escapeQuizText(SUBJECT_DATA[subjectId].icon + ' ' + SUBJECT_DATA[subjectId].name) + '</div>'
+      + '<div class="s-score">已练 ' + summary.attempts + ' 次 | 当前正确率 ' + percent + '%</div></div>'
+      + '<div style="font-size:12px;color:var(--text2)">弱项：' + escapeQuizText(weak) + '</div></div>'
+      + '<div class="flex gap-8 flex-wrap">'
+      + '<button class="btn btn-sm btn-primary" onclick="' + startAction('smart-daily') + '">今日智能练</button>'
+      + '<button class="btn btn-sm btn-outline" onclick="' + startAction('quick-score') + '">快速提分卷</button>'
+      + '<button class="btn btn-sm btn-outline" onclick="' + startAction('variant-wrong') + '">错题变式练</button>'
+      + '<button class="btn btn-sm btn-outline" onclick="' + startAction('shanxi-focus') + '">山西真题专项</button>'
+      + '<button class="btn btn-sm btn-outline" onclick="' + startAction('boss-breakthrough') + '">压轴突破</button>'
+      + '<button class="btn btn-sm btn-outline" onclick="' + startAction('score-guard') + '">考前保分</button>'
+        + '<button class="btn btn-sm btn-outline" onclick="' + startAction('chapter-paper') + '">章节卷</button>'
+        + '<button class="btn btn-sm btn-outline" onclick="' + startAction('special-paper') + '">专项卷</button>'
+        + '<button class="btn btn-sm btn-outline" onclick="' + startAction('mistake-paper') + '">错题卷</button>'
+        + '<button class="btn btn-sm btn-outline" onclick="' + startAction('sprint-paper') + '">冲刺卷</button>'
+      + '</div></div>';
+  }
+
+  function renderPracticeLanding() {
+    headerTitle.textContent = '练习';
+    const summary = summarizeCurrentSubject();
+    let html = '';
+    html += window.QuestionRenderer.renderMasterySummary(summary, escapeQuizText);
+    html += '<div class="card"><div class="card-header">🎯 提分训练模式</div>';
+    html += '<div style="font-size:13px;color:var(--text2);margin-bottom:12px">题库已按知识点、题型、难度、来源重组。系统会根据正确率、速度、近期表现和难度权重自动推荐题目。</div>';
+    html += '<div class="flex gap-8 flex-wrap">';
+    html += '<button class="btn btn-primary" onclick="startRecommendedPractice(\'smart-daily\')">今日智能练</button>';
+    html += '<button class="btn btn-outline" onclick="startRecommendedPractice(\'quick-score\')">快速提分卷</button>';
+    html += '<button class="btn btn-outline" onclick="startRecommendedPractice(\'variant-wrong\')">错题变式练</button>';
+    html += '<button class="btn btn-outline" onclick="startRecommendedPractice(\'shanxi-focus\')">山西真题专项</button>';
+    html += '<button class="btn btn-outline" onclick="startRecommendedPractice(\'boss-breakthrough\')">压轴突破</button>';
+    html += '<button class="btn btn-outline" onclick="startRecommendedPractice(\'score-guard\')">考前保分</button>';
+    html += '</div></div>';
+    html += '<div class="card"><div class="card-header">🧾 组卷训练</div>';
+    html += '<div style="font-size:13px;color:var(--text2);margin-bottom:12px">按章节、题型、错题和冲刺目标自动生成卷子，便于过渡到 10000+ 题库后的卷型训练。</div>';
+    html += '<div class="flex gap-8 flex-wrap">';
+    html += '<button class="btn btn-outline" onclick="startRecommendedPractice(\'chapter-paper\')">章节卷</button>';
+    html += '<button class="btn btn-outline" onclick="startRecommendedPractice(\'special-paper\')">专项卷</button>';
+    html += '<button class="btn btn-outline" onclick="startRecommendedPractice(\'mistake-paper\')">错题卷</button>';
+    html += '<button class="btn btn-outline" onclick="startRecommendedPractice(\'sprint-paper\')">冲刺卷</button>';
+    html += '</div></div>';
+    html += renderPaperConfigCard();
+    html += '<div class="card"><div class="card-header">📚 学科入口</div>';
+    html += '<div style="font-size:13px;color:var(--text2);margin-bottom:8px">先做结构升级：统一题目格式、学生画像、推荐引擎已经接入；后续只需要持续扩题即可扩到 3500+。</div></div>';
+    SUBJECT_ORDER.forEach(subj => {
+      html += buildPracticeOverviewCard(subj);
+    });
+    html += '<div class="card"><div class="card-header">🗂 题库组织维度</div>';
+    html += '<div class="tag-row">';
+    ['知识点层', '题型层', '难度 L1-L5', '来源层', '评分点', '易错原因', '山西考频'].forEach(tag => {
+      html += '<span class="tag">' + escapeQuizText(tag) + '</span>';
+    });
+    html += '</div></div>';
+    main.innerHTML = html;
+  }
+
+  window.startPractice = function (subj, unitId) {
+    const bank = getSubjectQuestionBank(subj, false).filter(question => question.unitId === unitId);
+    if (!bank.length) {
+      alert('该单元暂无练习题');
+      return;
+    }
+    currentSubject = subj;
+    currentUnit = unitId;
+    startQuizSession(bank, {
+      type: 'unit',
+      subject: subj,
+      unitId: unitId,
+      title: SUBJECT_DATA[subj].name + ' · ' + (SUBJECT_DATA[subj].units.find(unit => unit.id === unitId) || {}).name
+    }, 'all');
+  };
+
+  window.updatePracticePaperConfig = function (field, value) {
+    practicePaperConfig[field] = value;
+    if (field === 'subject') {
+      currentSubject = value;
+      practicePaperConfig.unitId = '';
+      practicePaperConfig.typeCategory = '';
+    }
+    syncPracticePaperConfig();
+    if (currentView === 'practice' && !quizQuestions.length) renderPracticeLanding();
+  };
+
+  window.startConfiguredPaper = function (mode) {
+    const subjectId = getPracticePaperSubject();
+    if (!filterConfiguredPracticeBank(subjectId).length) return;
+    startRecommendedPractice(mode, subjectId, {
+      unitId: practicePaperConfig.unitId || null,
+      typeCategory: practicePaperConfig.typeCategory || null,
+      difficultyRange: getDifficultyRange(practicePaperConfig.difficulty),
+      source: practicePaperConfig.source || null,
+      count: parseInt(practicePaperConfig.count, 10) || 12
+    });
+  };
+
+  window.startRecommendedPractice = function (mode, subj, overrides) {
+    const subject = subj || currentSubject;
+    const bank = subject ? getSubjectQuestionBank(subject, false) : getAllQuestionBank(false);
+    const summary = subject
+      ? window.PracticeAnalytics.summarizeSubject(State, subject, window.QUESTION_BANK || {}, window.QUESTION_INDEX || {})
+      : null;
+    const defaultUnitId = subject && SUBJECT_DATA[subject] && SUBJECT_DATA[subject].units.length
+      ? SUBJECT_DATA[subject].units[0].id
+      : null;
+    const recommended = window.RecommendationEngine.buildByMode(mode, {
+      bank: bank,
+      state: State,
+      subject: subject,
+      count: overrides && Object.prototype.hasOwnProperty.call(overrides, 'count') ? overrides.count : (mode === 'smart-daily' ? 20 : (mode === 'sprint-paper' ? 18 : 12)),
+      unitId: overrides && Object.prototype.hasOwnProperty.call(overrides, 'unitId') ? overrides.unitId : (currentUnit && currentUnit !== '__recommended__' ? currentUnit : defaultUnitId),
+      typeCategory: overrides && Object.prototype.hasOwnProperty.call(overrides, 'typeCategory') ? overrides.typeCategory : null,
+      difficultyRange: overrides && Object.prototype.hasOwnProperty.call(overrides, 'difficultyRange') ? overrides.difficultyRange : null,
+      source: overrides && Object.prototype.hasOwnProperty.call(overrides, 'source') ? overrides.source : null,
+      questionIndex: window.QUESTION_INDEX || {},
+      questionBank: window.QUESTION_BANK || {}
+    });
+    if (!recommended.length) {
+      alert('当前题量还不够支撑该模式，先从单元练习开始累计画像。');
+      return;
+    }
+    currentSubject = subject || currentSubject;
+    currentUnit = '__recommended__';
+    State.recommendationHistory.push({ mode: mode, subject: subject || 'all', timestamp: Date.now(), count: recommended.length });
+    saveState();
+    startQuizSession(recommended, {
+      type: 'recommendation',
+      subject: subject || null,
+      title: ({
+        'smart-daily': '今日智能练',
+        'quick-score': '快速提分卷',
+        'variant-wrong': '错题变式练',
+        'shanxi-focus': '山西真题专项',
+        'boss-breakthrough': '压轴突破',
+        'score-guard': '考前保分',
+        'chapter-paper': '章节卷',
+        'special-paper': '专项卷',
+        'mistake-paper': '错题卷',
+        'sprint-paper': '冲刺卷'
+      })[mode] || '推荐练习',
+      questionIds: recommended.map(question => question.id)
+    }, mode);
+  };
+
+  function renderObjectiveQuestion(question, answerState) {
+    const options = question.type === 'truefalse' ? [{ key:'A', text:'正确' }, { key:'B', text:'错误' }] : (question.options || []);
+    return options.map(opt => {
+      let cls = 'quiz-option';
+      if (answerState) {
+        if (opt.key === question.answer) cls += ' correct';
+        else if (opt.key === answerState.answered) cls += ' wrong';
+      }
+      return '<div class="' + cls + '" onclick="answerQuiz(\'' + question.id + '\', \'' + opt.key + '\')">'
+        + escapeQuizText(opt.key + '. ' + opt.text)
+        + '</div>';
+    }).join('');
+  }
+
+  function renderOpenQuestion(question, answerState) {
+    if (!answerState) {
+      if (question.type === 'fill') {
+        return '<input id="open-answer" class="quiz-input" placeholder="请输入答案">'
+          + '<button class="btn btn-primary mt-16" onclick="submitOpenAnswer(\'' + question.id + '\')">提交并查看解析</button>';
+      }
+      return renderOpenAnswerCoach(question)
+        + '<textarea id="open-answer" class="quiz-input" style="min-height:160px" placeholder="先按上方骨架分点作答，再提交查看评分点"></textarea>'
+        + '<button class="btn btn-primary mt-16" onclick="submitOpenAnswer(\'' + question.id + '\')">提交并查看解析</button>';
+    }
+    let html = '<div class="answer-box"><div class="label">我的答案</div>' + escapeQuizText(answerState.answered || '（未填写）') + '</div>';
+    html += '<div class="answer-box"><div class="label">参考答案</div>' + escapeQuizText(question.refAnswer || question.answer || question.explanation || '') + '</div>';
+    if (question.rubric && question.rubric.length) {
+      const coverage = analyzeRubricCoverage(answerState.answered, question.rubric);
+      const missing = coverage.filter(item => !item.matched);
+      html += '<div class="answer-box"><div class="label">评分点</div>' + question.rubric.map((item, index) => (index + 1) + '. ' + escapeQuizText(item)).join('<br>') + '</div>';
+      html += '<div class="answer-box"><div class="label">评分点对照</div>'
+        + coverage.map((item, index) => (item.matched ? '✅ ' : '⬜ ') + (index + 1) + '. ' + escapeQuizText(item.item)).join('<br>')
+        + '</div>';
+      html += '<div class="answer-box"><div class="label">缺口提醒</div>'
+        + escapeQuizText(missing.length ? ('还缺 ' + missing.length + ' 个点：' + missing.map(item => item.item).join(' / ')) : '本轮答案已覆盖评分点，可继续优化表达和层次。')
+        + (missing.length ? '<div style="margin-top:8px"><button class="btn btn-outline btn-sm" onclick="reviewCurrentQuestionGaps()">按缺口回看讲解/模板</button></div>' : '')
+        + '</div>';
+    }
+    if (question.commonMistake) {
+      html += '<div class="answer-box"><div class="label">易错原因</div>' + escapeQuizText(question.commonMistake) + '</div>';
+    }
+    return html;
+  }
+
+  window.useOpenAnswerTemplate = function () {
+    const question = quizQuestions[quizIndex];
+    if (!question) return;
+    const input = document.getElementById('open-answer');
+    if (!input) return;
+    const template = getOpenAnswerTemplate(question);
+    if (!template) return;
+    input.value = template;
+    input.focus();
+  };
+
+  window.renderPracticeView = function () {
+    headerTitle.textContent = '练习';
+    if (!quizQuestions.length) {
+      renderPracticeLanding();
+      return;
+    }
+    const question = quizQuestions[quizIndex];
+    const isObjective = question.type === 'single' || question.type === 'truefalse' || Array.isArray(question.options);
+    const answerState = getDisplayAnswer(question.id);
+    let html = '';
+    html += '<div class="mode-bar">';
+    [
+      ['all', '全部'],
+      ['wrong', '错题'],
+      ['random', '随机10题'],
+      ['adaptive', '难度适配']
+    ].forEach(item => {
+      html += '<div class="mode-chip' + (quizMode === item[0] ? ' active' : '') + '" onclick="switchQuizMode(\'' + item[0] + '\')">' + item[1] + '</div>';
+    });
+    html += '</div>';
+    html += '<div style="padding:0 16px;font-size:13px;color:var(--text2)">' + escapeQuizText((quizSource && quizSource.title) || '练习') + ' | 第 ' + (quizIndex + 1) + '/' + quizQuestions.length + ' 题</div>';
+    html += '<div class="progress-bar" style="margin:4px 16px"><div class="fill" style="width:' + Math.round((quizIndex + 1) / quizQuestions.length * 100) + '%;background:var(--primary)"></div></div>';
+    html += renderGuidedPracticeCard(question, answerState);
+    html += '<div class="quiz-card">';
+    html += window.QuestionRenderer.renderQuestionMeta(question, escapeQuizText);
+    html += '<div class="q-stem">' + (quizIndex + 1) + '. ' + escapeQuizText(question.stem) + '</div>';
+    html += isObjective ? renderObjectiveQuestion(question, answerState) : renderOpenQuestion(question, answerState);
+    if (answerState) {
+      html += '<div class="quiz-feedback show ' + (answerState.correct ? 'correct' : 'wrong') + '">';
+      html += answerState.correct ? '✅ 本轮作答正确。' : '❌ 本轮作答未通过。';
+      if (question.explanation) html += ' ' + escapeQuizText(question.explanation);
+      if (!answerState.correct && ((quizSource && quizSource.unitId) || (currentUnit && currentUnit !== '__recommended__'))) {
+        html += '<div style="margin-top:8px"><button class="btn btn-outline btn-sm" onclick="reviewCurrentUnit()">回看本单元讲解/模板</button></div>';
+      }
+      html += '</div>';
+    }
+    html += '<div class="quiz-nav">';
+    html += '<button class="btn btn-outline" ' + (quizIndex === 0 ? 'disabled' : '') + ' onclick="quizIndex=Math.max(0,quizIndex-1);renderPracticeView()">上一题</button>';
+    html += '<button class="btn btn-primary" onclick="' + (quizIndex < quizQuestions.length - 1 ? 'quizIndex++;renderPracticeView()' : 'finishQuiz()') + '">' + (quizIndex < quizQuestions.length - 1 ? '下一题' : '完成') + '</button>';
+    html += '</div></div>';
+    main.innerHTML = html;
+  };
+
+  window.answerQuiz = function (qid, answer) {
+    if (currentSessionAnswers[qid]) return;
+    const question = quizQuestions[quizIndex];
+    const timestamp = Date.now();
+    const correct = answer === question.answer;
+    const answerTime = Math.max(3, Math.round((timestamp - currentSessionStartedAt) / 1000));
+    currentSessionAnswers[qid] = { answered: answer, correct: correct, timestamp: timestamp, answerTime: answerTime };
+    markQuestionAttempt(question, {
+      answered: answer,
+      correct: correct,
+      timestamp: timestamp,
+      answerTime: answerTime,
+      mistakeReason: correct ? '' : (question.commonMistake || '基础概念区分不清')
+    });
+    renderPracticeView();
+  };
+
+  window.submitOpenAnswer = function (qid) {
+    if (currentSessionAnswers[qid]) return;
+    const question = quizQuestions[quizIndex];
+    const input = document.getElementById('open-answer');
+    const answered = input ? input.value.trim() : '';
+    const timestamp = Date.now();
+    const answerTime = Math.max(5, Math.round((timestamp - currentSessionStartedAt) / 1000));
+    const correct = question.type === 'fill' && question.answer
+      ? answered.replace(/\s+/g, '').toLowerCase() === String(question.answer).replace(/\s+/g, '').toLowerCase()
+      : false;
+    currentSessionAnswers[qid] = {
+      answered: answered,
+      correct: correct,
+      timestamp: timestamp,
+      answerTime: answerTime,
+      openEnded: true
+    };
+    markQuestionAttempt(question, {
+      answered: answered,
+      correct: correct,
+      timestamp: timestamp,
+      answerTime: answerTime,
+      mistakeReason: correct ? '' : (question.commonMistake || '表达步骤不完整'),
+      openEnded: true
+    });
+    renderPracticeView();
+  };
+
+  window.switchQuizMode = function (mode) {
+    quizMode = mode;
+    let bank = getActiveBank();
+    if (!bank.length) {
+      renderPracticeLanding();
+      return;
+    }
+    if (mode === 'wrong') {
+      const wrongIds = new Set(State.attemptLog.filter(item => !item.correct).map(item => item.questionId));
+      bank = bank.filter(question => wrongIds.has(question.id));
+      if (!bank.length) {
+        alert('当前没有可重练的错题。');
+        bank = getActiveBank();
+        quizMode = 'all';
+      }
+    } else if (mode === 'random') {
+      bank = uniqueById(bank.sort(() => Math.random() - 0.5)).slice(0, Math.min(10, bank.length));
+    } else if (mode === 'adaptive') {
+      bank = window.RecommendationEngine.buildByMode('adaptive', {
+        bank: bank,
+        state: State,
+        count: Math.min(12, bank.length),
+        questionIndex: window.QUESTION_INDEX || {},
+        questionBank: window.QUESTION_BANK || {}
+      });
+    }
+    startQuizSession(bank, quizSource, mode);
+  };
+
+  window.finishQuiz = function () {
+    const currentAnswers = quizQuestions.map(question => currentSessionAnswers[question.id]).filter(Boolean);
+    const objective = quizQuestions.filter(question => question.type === 'single' || question.type === 'truefalse' || Array.isArray(question.options));
+    const objectiveCorrect = objective.filter(question => {
+      const answer = currentSessionAnswers[question.id];
+      return answer && answer.correct;
+    }).length;
+    const totalObjective = objective.length;
+    const completed = currentAnswers.length;
+    const pct = totalObjective ? Math.round(objectiveCorrect / totalObjective * 100) : 0;
+    let emoji = pct >= 85 ? '🎯' : pct >= 65 ? '📈' : '💪';
+    let html = '<div class="empty-state"><div class="icon">' + emoji + '</div>';
+    html += '<div style="font-size:24px;font-weight:700;margin:8px 0">完成 ' + completed + '/' + quizQuestions.length + ' 题</div>';
+    html += '<div>' + (totalObjective ? ('客观题正确率 ' + pct + '%') : '主观题已进入自评环节') + '</div>';
+    html += '<div class="template-box" style="margin-top:16px;text-align:left">';
+    const latestWeak = Object.keys(State.masteryMap || {})
+      .map(tag => ({ tag: tag, mastery: State.masteryMap[tag].mastery }))
+      .sort((a, b) => a.mastery - b.mastery)
+      .slice(0, 3);
+    html += '下一步建议：' + (latestWeak.length ? latestWeak.map(item => item.tag).join(' / ') : '继续做今日智能练');
+    html += '</div>';
+    if (quizSource && quizSource.guidedStage) {
+      const guidedMeta = getGuidedStageMeta(quizSource.guidedStage);
+      html += '<div class="template-box" style="margin-top:12px;text-align:left">';
+      html += '<b>课后复盘</b>：本轮属于“' + escapeQuizText(guidedMeta.title) + '”。';
+      html += quizSource.guidedStage === 'foundation'
+        ? ' 如果还有错题，先回单元讲解，把概念、公式、易错点重新过一遍。'
+        : quizSource.guidedStage === 'template'
+          ? ' 复盘时重点看答案结构是否完整，是否先搭框架再填内容。'
+          : quizSource.guidedStage === 'sprint'
+            ? ' 复盘时重点看哪些题可以更快拿稳基础分，哪些难点需要二次突破。'
+            : ' 复盘时把错因写清楚，再做一次同类题巩固。';
+      html += '</div>';
+    }
+    html += '<div style="text-align:center;margin-top:16px">';
+    if ((quizSource && quizSource.unitId) || (currentUnit && currentUnit !== '__recommended__')) {
+      html += '<button class="btn btn-outline" onclick="reviewCurrentUnit()">回到本单元带学</button> ';
+    }
+    html += '<button class="btn btn-primary" onclick="switchQuizMode(\'wrong\')">重做错题</button> ';
+    html += '<button class="btn btn-outline" onclick="quizQuestions=[];currentUnit=null;quizSource=null;renderPracticeView()">返回练习</button>';
+    html += '</div></div>';
+    main.innerHTML = html;
+  };
+
+  headerBack.addEventListener('click', event => {
+    if (currentView === 'practice' && quizQuestions.length > 0) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      quizQuestions = [];
+      quizSource = null;
+      currentSessionAnswers = {};
+      currentUnit = null;
+      renderPracticeView();
+      return;
+    }
+  }, true);
+
+  ensureStateShape();
+  rebuildQuestionBank();
+  refreshMasteryMap();
+  registerPwaSupport();
+  saveState();
+  if (currentView === 'practice') renderPracticeView();
+})();
+</script>
+</body>
+</html>
