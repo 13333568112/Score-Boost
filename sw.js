@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zk-helper-v1';
+const CACHE_NAME = 'zk-helper-v2';
 const APP_SHELL = [
   './',
   './index.html',

@@ -195,12 +195,82 @@
     return stripHtml(text).replace(/\s+/g, "").replace(/[，。！？；：、“”‘’（）()【】\[\],.!?;:'"\-]/g, "").toLowerCase();
   }
 
-  function buildContextualDistractors(subject, unit, concept, correctText) {
+  function pickFirstFormula(unit) {
+    const formula = Array.isArray(unit.formulas) && unit.formulas.length ? unit.formulas[0] : null;
+    if (!formula) return null;
+    return {
+      expression: stripHtml(formula.expression || ""),
+      description: stripHtml(formula.description || formula.expression || "")
+    };
+  }
+
+  function buildProfileDistractors(subject, unit, concept, correctText, profile) {
+    const focusTitle = stripOrderPrefix((concept && concept.title) || unit.name || "本单元重点");
+    const formula = pickFirstFormula(unit);
+    const methodText = stripHtml((concept && (concept.mnemonic || concept.highlightText || firstSentence(concept.body))) || "");
+    const profileType = String((profile && profile.type) || "generic");
+    const profileText = stripHtml((profile && profile.referenceText) || "");
+    const questionStem = stripHtml((profile && profile.stem) || "");
+    const extras = [];
+
+    if (Array.isArray(profile && profile.extraWrongTexts)) {
+      profile.extraWrongTexts.forEach(item => extras.push(stripHtml(item)));
+    }
+
+    if (profileType === "formula") {
+      if (formula && formula.expression) {
+        extras.push("只要出现“" + focusTitle + "”就机械套用“" + formula.expression + "”，不先判断已知量和适用条件。");
+      }
+      extras.push("先根据感觉猜一个关系式，再回头看题目条件是否匹配“" + focusTitle + "”。");
+      extras.push("把“" + focusTitle + "”中的公式、单位和物理量含义混着用，认为代进去就能得分。");
+    } else if (profileType === "method") {
+      extras.push("复习“" + focusTitle + "”时，只记零散口诀，不知道它对应的题型入口和使用前提。");
+      extras.push("遇到“" + focusTitle + "”时，先凭经验跳步骤，不用本单元的核心方法梳理解题顺序。");
+      extras.push("把“" + focusTitle + "”的方法模板和别的单元技巧混用，默认都能直接套。");
+    } else if (profileType === "summary") {
+      extras.push("概括“" + focusTitle + "”时，只摘局部现象或关键词，没有回到核心定义或规律。");
+      extras.push("把“" + focusTitle + "”的条件、结果和结论顺序说反，认为意思差不多即可。");
+      extras.push("总结“" + focusTitle + "”时，脱离题干和材料，只背一个模糊印象。");
+    } else if (profileType === "correction") {
+      extras.push("知道“" + focusTitle + "”这类说法有问题，但纠正时仍然没有补上正确前提或条件。");
+      extras.push("纠正“" + focusTitle + "”误区时，只把错误词换掉，没有回到正确概念重新表达。");
+      extras.push("看到易错点就直接否定原说法，却说不清为什么错、应该怎么改。");
+    } else if (profileType === "exam-step") {
+      extras.push("做“" + focusTitle + "”题时第一步就急着算或作答，没有先定位定义、关系式或材料信息。");
+      extras.push("处理“" + focusTitle + "”题时，先看选项猜结果，再倒推过程，忽略题目给出的关键信息。");
+      extras.push("面对“" + focusTitle + "”时把审题、建模和计算顺序打乱，导致后面步骤都失真。");
+    } else if (profileType === "shanxi-real") {
+      extras.push("遇到山西真题风格的“" + focusTitle + "”题，只抓表面表述，不回到课本定义和条件限制。");
+      extras.push("把材料中的关键信息略过，直接按熟悉说法判断“" + focusTitle + "”结论是否成立。");
+      extras.push("觉得“" + focusTitle + "”这类真题只考记忆，不去比较各说法的准确程度和适用范围。");
+    } else if (profileType === "shanxi-mock") {
+      extras.push("备考“" + focusTitle + "”时，只求做题快，不先固定本单元最稳的拿分方法。");
+      extras.push("面对“" + focusTitle + "”模拟题，看到熟词就选，看似会做却没有真正匹配题目条件。");
+      extras.push("复习“" + focusTitle + "”时，把所谓技巧当答案本身，没有和教材概念结合。");
+    }
+
+    if (profileText && profileText !== stripHtml(correctText)) {
+      extras.push("作答时没有抓住“" + profileText + "”这个关键信息，而是换成了看似相近但不贴题的表述。");
+    }
+    if (questionStem) {
+      extras.push("审这道题时忽略了“" + questionStem.slice(0, 24) + (questionStem.length > 24 ? "..." : "") + "”里的限制条件。");
+    }
+    if (methodText && methodText !== stripHtml(correctText)) {
+      extras.push("虽然知道“" + methodText + "”，但实际选择时没把它和“" + focusTitle + "”的设问对上。");
+    }
+
+    return extras;
+  }
+
+  function buildContextualDistractors(subject, unit, concept, correctText, profile) {
     const focusTitle = stripOrderPrefix((concept && concept.title) || unit.name || "本单元重点");
     const peerConcept = (unit.concepts || []).find(item => !concept || item.id !== concept.id);
     const peerTitle = stripOrderPrefix((peerConcept && peerConcept.title) || "");
     const formulaHint = stripHtml((((unit.formulas || [])[0]) || {}).description || (((unit.formulas || [])[0]) || {}).expression || "题目条件");
     const wrongTexts = [];
+    buildProfileDistractors(subject, unit, concept, correctText, profile).forEach(text => {
+      wrongTexts.push(text);
+    });
 
     if (Array.isArray(unit.commonMistakes)) {
       unit.commonMistakes.forEach(item => {
@@ -343,12 +413,17 @@
     const formula = Array.isArray(unit.formulas) && unit.formulas.length ? unit.formulas[0] : null;
     if (!formula || !formula.expression) return null;
     const correctText = formula.expression + "（结合题目条件代入）";
-    const distractors = buildContextualDistractors(subject, unit, null, correctText);
+    const stem = "在“" + unit.name + "”中，遇到“" + stripHtml(formula.description || "相关计算") + "”类问题，最合适的关键公式或方法是？";
+    const distractors = buildContextualDistractors(subject, unit, null, correctText, {
+      type: "formula",
+      referenceText: stripHtml(formula.description || formula.expression),
+      stem: stem
+    });
     return {
       id: "gen-" + unit.id + "-formula-choice",
       type: "single",
       difficulty: Math.min(5, Math.max(1, Number(unit.difficulty || 1) + 1)),
-      stem: "在“" + unit.name + "”中，遇到“" + stripHtml(formula.description || "相关计算") + "”类问题，最合适的关键公式或方法是？",
+      stem: stem,
       options: buildChoiceOptions(correctText, distractors),
       answer: "A",
       explanation: "应优先定位适用关系式“" + formula.expression + "”，再结合条件代入求解。",
@@ -365,12 +440,17 @@
     const title = stripOrderPrefix(concept.title || unit.name);
     const methodText = stripHtml(concept.mnemonic || concept.highlightText || firstSentence(concept.body));
     if (!methodText) return null;
-    const distractors = buildContextualDistractors(subject, unit, concept, methodText);
+    const stem = "复习“" + title + "”时，下列哪一项最适合作为快速解题抓手？";
+    const distractors = buildContextualDistractors(subject, unit, concept, methodText, {
+      type: "method",
+      referenceText: title,
+      stem: stem
+    });
     return {
       id: "gen-" + unit.id + "-method",
       type: "single",
       difficulty: Math.max(1, Number(unit.difficulty || 1)),
-      stem: "复习“" + title + "”时，下列哪一项最适合作为快速解题抓手？",
+      stem: stem,
       options: buildChoiceOptions(methodText, distractors),
       answer: "A",
       explanation: "本单元更有效的抓手是：" + methodText,
@@ -387,12 +467,17 @@
     const title = stripOrderPrefix(concept.title || unit.name);
     const summary = firstSentence(concept.body);
     if (!summary) return null;
-    const distractors = buildContextualDistractors(subject, unit, concept, summary);
+    const stem = "围绕“" + title + "”，下列哪一项最符合本单元的核心结论？";
+    const distractors = buildContextualDistractors(subject, unit, concept, summary, {
+      type: "summary",
+      referenceText: title,
+      stem: stem
+    });
     return {
       id: "gen-" + unit.id + "-summary-choice",
       type: "single",
       difficulty: Math.max(1, Number(unit.difficulty || 1)),
-      stem: "围绕“" + title + "”，下列哪一项最符合本单元的核心结论？",
+      stem: stem,
       options: buildChoiceOptions(summary, distractors),
       answer: "A",
       explanation: "复习时要先抓住核心定义或规律，再结合题目条件判断。",
@@ -412,12 +497,20 @@
     const wrong = stripHtml(mistake.wrong || mistake.commonMistake);
     const correct = stripHtml(mistake.correct || "先回到概念和条件再判断");
     if (!wrong || !correct) return null;
-    const distractors = buildContextualDistractors(subject, unit, null, correct);
+    const stem = "针对“" + wrong + "”这一高频误区，下列纠正最准确的是？";
+    const distractors = buildContextualDistractors(subject, unit, null, correct, {
+      type: "correction",
+      referenceText: wrong,
+      stem: stem,
+      extraWrongTexts: [
+        "只把“" + wrong + "”换个说法重复一遍，没有给出真正正确的纠正口径。"
+      ]
+    });
     return {
       id: "gen-" + unit.id + "-correction-choice",
       type: "single",
       difficulty: Math.min(5, Math.max(1, Number(unit.difficulty || 1) + 1)),
-      stem: "针对“" + wrong + "”这一高频误区，下列纠正最准确的是？",
+      stem: stem,
       options: buildChoiceOptions(correct, distractors),
       answer: "A",
       explanation: "高频误区要连同错误原因和正确口径一起记，才能稳定拿分。",
@@ -438,12 +531,17 @@
       ? "先定位“" + stripHtml(formula.description || formula.expression) + "”对应的关系式，再代入条件"
       : stripHtml((concept && (concept.mnemonic || concept.highlightText)) || firstSentence((concept && concept.body) || "先回到概念定义"));
     if (!step) return null;
-    const distractors = buildContextualDistractors(subject, unit, concept, step);
+    const stem = "山西中考中，处理“" + title + "”相关题目时，最稳妥的第一步是？";
+    const distractors = buildContextualDistractors(subject, unit, concept, step, {
+      type: "exam-step",
+      referenceText: title,
+      stem: stem
+    });
     return {
       id: "gen-" + unit.id + "-exam-step",
       type: "single",
       difficulty: Math.max(1, Number(unit.difficulty || 1)),
-      stem: "山西中考中，处理“" + title + "”相关题目时，最稳妥的第一步是？",
+      stem: stem,
       options: buildChoiceOptions(step, distractors),
       answer: "A",
       explanation: "稳分的关键是先抓定义、关系式或解题入口，再做运算或组织表达。",
@@ -558,12 +656,17 @@
     if (!concept) return null;
     const right = firstSentence(concept.body);
     if (!right) return null;
-    const distractors = buildContextualDistractors(subject, unit, concept, right);
+    const stem = "山西真题改编：围绕“" + stripOrderPrefix(concept.title || unit.name) + "”，下列说法正确的是？";
+    const distractors = buildContextualDistractors(subject, unit, concept, right, {
+      type: "shanxi-real",
+      referenceText: stripOrderPrefix(concept.title || unit.name),
+      stem: stem
+    });
     return {
       id: "gen-" + unit.id + "-shanxi-real",
       type: "single",
       difficulty: Math.max(1, Number(unit.difficulty || 1)),
-      stem: "山西真题改编：围绕“" + stripOrderPrefix(concept.title || unit.name) + "”，下列说法正确的是？",
+      stem: stem,
       options: buildChoiceOptions(right, distractors),
       answer: "A",
       explanation: "本题考查该单元的核心概念，正确表述应回到定义和适用条件。",
@@ -580,12 +683,17 @@
     if (!concept) return null;
     const strategy = stripHtml(concept.mnemonic || concept.highlightText || firstSentence(concept.body));
     if (!strategy) return null;
-    const distractors = buildContextualDistractors(subject, unit, concept, strategy);
+    const stem = "山西模拟原创：复习“" + stripOrderPrefix(concept.title || unit.name) + "”时，哪一项更可能帮助你稳住得分？";
+    const distractors = buildContextualDistractors(subject, unit, concept, strategy, {
+      type: "shanxi-mock",
+      referenceText: stripOrderPrefix(concept.title || unit.name),
+      stem: stem
+    });
     return {
       id: "gen-" + unit.id + "-shanxi-mock",
       type: "single",
       difficulty: Math.min(5, Math.max(1, Number(unit.difficulty || 1) + 1)),
-      stem: "山西模拟原创：复习“" + stripOrderPrefix(concept.title || unit.name) + "”时，哪一项更可能帮助你稳住得分？",
+      stem: stem,
       options: buildChoiceOptions(strategy, distractors),
       answer: "A",
       explanation: "山西中考更看重基础概念和条件匹配，稳分策略是先抓住本单元的关键方法。",
