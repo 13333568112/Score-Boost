@@ -69,7 +69,7 @@ sw.js
 生成后的地址通常类似：
 
 ```text
-https://你的用户名.github.io/仓库名/
+https://13333568112.github.io/Score-Boost/
 ```
 
 如果仓库里保留了 `.github/workflows/deploy-pages.yml`，你也可以把 Pages 的 `Source` 改成 `GitHub Actions`，之后每次推送都会自动发布。
@@ -81,8 +81,20 @@ git init
 git add .
 git commit -m "init pwa"
 git branch -M main
-git remote add origin https://github.com/你的用户名/你的仓库名.git
+git remote add origin https://github.com/13333568112/Score-Boost.git
 git push -u origin main
+```
+
+当前仓库地址：
+
+```text
+https://github.com/13333568112/Score-Boost
+```
+
+当前线上地址：
+
+```text
+https://13333568112.github.io/Score-Boost/
 ```
 
 然后按上面的 Pages 设置步骤开启即可。

@@ -16,7 +16,7 @@
 5. 仓库名可以填：
 
 ```text
-zhongkao-helper
+Score-Boost
 ```
 
 6. 选 `Public`。
@@ -75,7 +75,7 @@ GitHub Actions
 地址通常像这样：
 
 ```text
-https://你的用户名.github.io/zhongkao-helper/
+https://13333568112.github.io/Score-Boost/
 ```
 
 ## 第五步：手机安装
